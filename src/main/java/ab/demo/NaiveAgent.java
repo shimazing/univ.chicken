@@ -54,6 +54,8 @@ public class NaiveAgent implements Runnable {
 
 		aRobot.loadLevel(currentLevel);
 		while (true) {
+			BufferedImage image = ActionRobot.doScreenShot();
+			System.out.println("Image Size: " + image.getWidth() + "," + image.getHeight());
 			GameState state = solve();
 			if (state == GameState.WON) {
 				try {
@@ -276,6 +278,5 @@ public class NaiveAgent implements Runnable {
 		if (args.length > 0)
 			na.currentLevel = Integer.parseInt(args[0]);
 		na.run();
-
 	}
 }
