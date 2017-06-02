@@ -114,7 +114,7 @@ public class ClientMessageEncoder {
 				.getValue(ClientMessageTable.clickInCentre) };
 		return message;
 	}
-	//encode getState message
+	//encode getObservation message
 	public static byte[] getState() {
 		byte[] message = { ClientMessageTable
 				.getValue(ClientMessageTable.getState) };

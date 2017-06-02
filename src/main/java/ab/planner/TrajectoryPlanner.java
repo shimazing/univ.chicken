@@ -382,7 +382,7 @@ public class TrajectoryPlanner {
     }
     
     // take the initial angle of the desired trajectory and return the launch angle required
-    private double actualToLaunch(double theta)
+    public double actualToLaunch(double theta)
     {
         for (int i = 1; i < _launchAngle.length; i++)
         {
@@ -393,7 +393,7 @@ public class TrajectoryPlanner {
     }
     
     // take the launch angle and return the actual angle of the resulting trajectory
-    private double launchToActual(double theta)
+    public double launchToActual(double theta)
     {
         for (int i = 1; i < _launchAngle.length; i++)
         {
@@ -404,7 +404,7 @@ public class TrajectoryPlanner {
     }
     
     // adjust the scale setting for this scene
-    private void adjustScale(double v, double theta)
+    public void adjustScale(double v, double theta)
     {    
         int i = 0;
         while (i < _launchVelocity.length && theta > _launchAngle[i])

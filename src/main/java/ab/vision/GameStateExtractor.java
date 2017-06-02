@@ -12,6 +12,7 @@ package ab.vision;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -62,41 +63,42 @@ public class GameStateExtractor {
 	// create a game state extractor and load subimages
 	public GameStateExtractor() {
 		try {
-			_mainmenu = ImageIO.read(getClass().getResource(
-					"resources/mainmenu.png"));
-			_episodemenu = ImageIO.read(getClass().getResource(
-					"resources/episodemenu.png"));
-			_levelselection = ImageIO.read(getClass().getResource(
+			System.out.println(new File("./resources/mainmenu.png").exists());
+			_mainmenu = ImageIO.read(new File(
+					"./resources/mainmenu.png"));
+			_episodemenu = ImageIO.read(new File(
+					"./resources/episodemenu.png"));
+			_levelselection = ImageIO.read(new File(
 					"resources/levelselection.png"));
-			_loading = ImageIO.read(getClass().getResource(
+			_loading = ImageIO.read(new File(
 					"resources/loading.png"));
-			_loading2 = ImageIO.read(getClass().getResource(
+			_loading2 = ImageIO.read(new File(
 					"resources/loading2.png"));
-			_gamewon1 = ImageIO.read(getClass().getResource(
+			_gamewon1 = ImageIO.read(new File(
 					"resources/gamewon1.png"));
-			_gamewon2 = ImageIO.read(getClass().getResource(
+			_gamewon2 = ImageIO.read(new File(
 					"resources/gamewon2.png"));
-			_gamelost = ImageIO.read(getClass().getResource(
+			_gamelost = ImageIO.read(new File(
 					"resources/gamelost.png"));
-			_endGame0 = ImageIO.read(getClass().getResource(
+			_endGame0 = ImageIO.read(new File(
 					"resources/0endScreen.png"));
-			_endGame1 = ImageIO.read(getClass().getResource(
+			_endGame1 = ImageIO.read(new File(
 					"resources/1endScreen.png"));
-			_endGame2 = ImageIO.read(getClass().getResource(
+			_endGame2 = ImageIO.read(new File(
 					"resources/2endScreen.png"));
-			_endGame3 = ImageIO.read(getClass().getResource(
+			_endGame3 = ImageIO.read(new File(
 					"resources/3endScreen.png"));
-			_endGame4 = ImageIO.read(getClass().getResource(
+			_endGame4 = ImageIO.read(new File(
 					"resources/4endScreen.png"));
-			_endGame5 = ImageIO.read(getClass().getResource(
+			_endGame5 = ImageIO.read(new File(
 					"resources/5endScreen.png"));
-			_endGame6 = ImageIO.read(getClass().getResource(
+			_endGame6 = ImageIO.read(new File(
 					"resources/6endScreen.png"));
-			_endGame7 = ImageIO.read(getClass().getResource(
+			_endGame7 = ImageIO.read(new File(
 					"resources/7endScreen.png"));
-			_endGame8 = ImageIO.read(getClass().getResource(
+			_endGame8 = ImageIO.read(new File(
 					"resources/8endScreen.png"));
-			_endGame9 = ImageIO.read(getClass().getResource(
+			_endGame9 = ImageIO.read(new File(
 					"resources/9endScreen.png"));
 
 		} catch (IOException e) {
