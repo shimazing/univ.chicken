@@ -68,8 +68,12 @@ public class UCObservation {
         return PROJECTION_MATRIX.mmul(Nd4j.toFlattened(mBirdArray, mScreenArray).transposei());
     }
 
+    public boolean isEmptyPixelAtScreen(int pixelX, int pixelY) {
+        return mScreenArray.getInt(pixelX - X_OFFSET, pixelY - Y_OFFSET) == 16777215;
+    }
 
-    private UCObservation (ActionRobot mRobot, long timeStep, File originalImage, File preprocessedImage) throws Exception {
+
+    private UCObservation (ActionRobot mRobot, File originalImage, File preprocessedImage) throws Exception {
         Vision vision = null;
         Rectangle sling = null;
         ABType birdOnSling = ABType.Unknown;
@@ -100,7 +104,7 @@ public class UCObservation {
             fillArray(tnts);
             fillArray(pigs);
 
-            mTimeStep = timeStep;
+
 
             if(image != null) {
                 ImageIO.write(image, IMG_FORMAT, originalImage);
