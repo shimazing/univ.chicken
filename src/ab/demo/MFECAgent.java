@@ -45,7 +45,6 @@ import ab.vision.GameStateExtractor.GameState;
 import ab.vision.Vision;
 
 public class MFECAgent implements Runnable {
-
 	private ActionRobot aRobot;
 	private Random randomGenerator;
 	public int currentLevel = 1;
@@ -56,7 +55,7 @@ public class MFECAgent implements Runnable {
 	private Point prevTarget;
 	public static HashMap<Double, HashMap<String, Integer>> ADic_Ag;
 	public static HashMap<String,int[][]> strToarrayStateDic;
-	public int numTimestamp = 0;
+	public int numTimestamp = 2900;
 	private int prevScore;
 	public boolean useMFEC = true; 
 	
@@ -66,7 +65,7 @@ public class MFECAgent implements Runnable {
 	public ArrayList<Double> actionHist = new ArrayList<Double>();
 	
 	public ArrayList<Integer> totalRewardHist = new ArrayList<Integer>();
-	public boolean trainingFlag = true;
+	public boolean trainingFlag = false;
 	
 	// a standalone implementation of the Naive Agent
 	public MFECAgent() {
@@ -84,15 +83,15 @@ public class MFECAgent implements Runnable {
 		}
 
 		//기존의  Adic 읽어들이기
-		 /*try
+		 try
 	      {
-	         FileInputStream fis = new FileInputStream("AdicMap_300.data");
+	         FileInputStream fis = new FileInputStream("AdicMap_2900.data");
 	         ObjectInputStream ois = new ObjectInputStream(fis);
 	         ADic_Ag = (HashMap<Double, HashMap<String, Integer>>) ois.readObject();
 	         ois.close();
 	         fis.close();
 	         
-	         FileInputStream fis2 = new FileInputStream("str2arrayDic_300.data");
+	         FileInputStream fis2 = new FileInputStream("str2arrayDic_2900.data");
 	         ObjectInputStream ois2 = new ObjectInputStream(fis2);
 	         strToarrayStateDic = (HashMap<String,int[][]>) ois2.readObject();
 	         ois2.close();
@@ -104,7 +103,7 @@ public class MFECAgent implements Runnable {
 	      {
 	         System.out.println("File not found");
 	         c.printStackTrace();
-	      }*/
+	      }
 		 
 		ActionRobot.GoFromMainMenuToLevelSelection();
 	}
@@ -153,21 +152,22 @@ public class MFECAgent implements Runnable {
 				int score = StateUtil.getScore(ActionRobot.proxy);
 				System.out.println("Current score: "+score);
 				
-				/*if(!scores.containsKey(currentLevel)) scores.put(currentLevel, score);
+				if(!scores.containsKey(currentLevel)) scores.put(currentLevel, score);
 				else if(scores.get(currentLevel) < score) scores.put(currentLevel, score);
 				int totalScore = 0;
 				for(Integer key: scores.keySet()){
 					totalScore += scores.get(key);
 					System.out.println(" Level " + key + " Score: " + scores.get(key) + " ");
 				}
-				System.out.println("Total Score: " + totalScore);*/
-				//if(currentLevel==21) currentLevel = 0; // map1애 대해서만
+				System.out.println("Total Score: " + totalScore);
+				
 				
 				if(trainingFlag){
 					trainingFlag = false;
 					aRobot.loadLevel(currentLevel);
 				}else{
 					trainingFlag = true;
+					if(currentLevel==21) currentLevel = 0;
 					aRobot.loadLevel(++currentLevel);
 				}
 				
@@ -274,13 +274,14 @@ public class MFECAgent implements Runnable {
 				}
 				
 				if(!strToarrayStateDic.containsKey(MFCstateStr)){
+					/*
 					BufferedImage stateImg = vision.getMBRVision().getStateImg();
 					File outputfile = new File("stateImages/Lev"+currentLevel+"_"+MFCstate.toString()+".jpg");
 					try {
 						ImageIO.write(stateImg, "jpg", outputfile);
 					} catch (IOException e) {
 						e.printStackTrace();
-					}
+					}*/
 					strToarrayStateDic.put(MFCstateStr, MFCstate);
 				}
 				
@@ -295,11 +296,11 @@ public class MFECAgent implements Runnable {
 				if(trainingFlag){
 					System.out.println("Training phase");
 					useMFEC = false;
-					
+					/*
 					//greedy 목표물로 block들도 추가.
 					List<ABObject> blocks = vision.findBlocksMBR();
 					pigs.addAll(blocks);
-					
+					*/
 					// random pick up a pig
 					ABObject pig = pigs.get(randomGenerator.nextInt(pigs.size()));
 					_tpt = pig.getCenter();// if the target is very close to before, randomly choose a
