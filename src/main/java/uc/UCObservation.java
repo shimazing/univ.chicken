@@ -35,21 +35,21 @@ public class UCObservation {
     private INDArray mBirdArray;
 
 
-    public static UCObservation generateObservation (ActionRobot robot, long timeStep, File originalImage, File preprocessedImage) {
+    public static UCObservation generateObservation (ActionRobot robot, File originalImage, File preprocessedImage) {
         try {
-            return new UCObservation(robot, timeStep, originalImage, preprocessedImage);
+            return new UCObservation(robot, originalImage, preprocessedImage);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
 
-    public static UCObservation generateObservation (ActionRobot robot, long timeStep, File originalImage) {
-        return generateObservation(robot, timeStep, originalImage, null);
+    public static UCObservation generateObservation (ActionRobot robot, File originalImage) {
+        return generateObservation(robot, originalImage, null);
     }
 
-    public static UCObservation generateObservation (ActionRobot robot, long timeStep) {
-        return generateObservation(robot, timeStep, null, null);
+    public static UCObservation generateObservation (ActionRobot robot) {
+        return generateObservation(robot, null, null);
     }
 
     public INDArray getScreenArray() {
@@ -96,7 +96,7 @@ public class UCObservation {
             List<ABObject> hills = vision.findHills();
 
             for (int i = 0; i < birds.size(); ++i) {
-                mBirdArray.putScalar(1, i, birds.get(i).getType().id);
+                mBirdArray.putScalar(0, i, birds.get(i).getType().id);
             }
 
             fillArray(hills);
@@ -112,8 +112,8 @@ public class UCObservation {
 
             if(preprocessedImage != null) {
                 BufferedImage img = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-                for(int x = 0; x <= WIDTH; ++x) {
-                    for(int y = 0; y <= HEIGHT; ++y) {
+                for(int x = 0; x < WIDTH; ++x) {
+                    for(int y = 0; y < HEIGHT; ++y) {
                         img.setRGB(x, y, mScreenArray.getInt(x, y));
                     }
                 }
@@ -126,62 +126,62 @@ public class UCObservation {
 
     private void fillArray(List<ABObject> objects) {
         for(ABObject obj : objects) {
-            ABShape shape = obj.shape;
 
             ABType type = obj.getType();
-            switch (shape) {
-                case Poly:
-                    fillPolygon((Poly) obj, toSimpleRGB(type.id));
-                    break;
-                case Rect:
-                    fillRectangle((Rect) obj, toSimpleRGB(type.id));
-                    break;
-                case Circle:
-                    fillCircle((Circle) obj, toSimpleRGB(type.id));
-                    break;
+            if(obj instanceof Poly) {
+                fillPolygon((Poly) obj, toSimpleRGB(type.id));
+            } else if ( obj instanceof Rect) {
+                fillRectangle((Rect) obj, toSimpleRGB(type.id));
+            } else if (obj instanceof Circle) {
+                System.out.println(type.name());
+                fillCircle((Circle) obj, toSimpleRGB(type.id));
+            } else {
+                System.out.println("There is unknown type of shape");
             }
+
+
         }
     }
 
     private void fillCircle(Circle  obj, double value) {
-        Circle newCircle = new Circle(obj.centerX, obj.centerY, obj.r - 1, obj.type);
+        Circle newCircle = new Circle(obj.centerX, obj.centerY, obj.r - 0.5 , obj.type);
 
         Rectangle rect = newCircle.getBounds();
-        int startX = (int) rect.getX();
-        int startY = (int) rect.getY();
-        int endX = startX + (int) rect.getWidth();
-        int endY = startY + (int) rect.getHeight();
+        double startX = rect.getX();
+        double startY = rect.getY();
+        double endX = startX + rect.getWidth();
+        double endY = startY + rect.getHeight();
 
         double centerX = newCircle.centerX;
         double centerY = newCircle.centerY;
         double radius = newCircle.r;
-
-        for(int x = startX; x <= endX; ++x) {
-            for(int y = startY; y <= endY; ++y) {
+        double radius2 = radius * radius;
+        for(double x = startX; x <= endX && x < WIDTH + X_OFFSET; ++x) {
+            for(double y = startY; y <= endY && y < HEIGHT + Y_OFFSET; ++y) {
                 double dx = x - centerX;
                 double dy = y - centerY;
                 double dist = dx * dx + dy * dy;
-                if(dist <= radius) {
-                    mScreenArray.putScalar(x - X_OFFSET, y - Y_OFFSET, value);
+                if(dist <= radius2) {
+                    mScreenArray.putScalar((int) (x - X_OFFSET) , (int) (y - Y_OFFSET) , value);
                 }
             }
         }
     }
 
     private void fillRectangle(Rect obj, double value) {
-        Rect newRect = new Rect(obj.centerX, obj.centerY, obj.getpWidth() - 1, obj.getpLength() - 1, obj.angle, obj.type);
+        Rect newRect = new Rect(obj.centerX, obj.centerY, obj.getpWidth() - 1.5, obj.getpLength() - 1.5, obj.angle, obj.type);
 
         Rectangle rect = newRect.getBounds();
-        int startX = (int) rect.getX();
-        int startY = (int) rect.getY();
-        int endX = startX + (int) rect.getWidth();
-        int endY = startY + (int) rect.getHeight();
+        double startX = rect.getX();
+        double startY = rect.getY();
+        double endX = startX + rect.getWidth();
+        double endY = startY + rect.getHeight();
         Polygon p = newRect.p;
 
-        for (int x = startX; x <= endX; ++x) {
-            for (int y = startY; y <= endY; ++y) {
+        for(double x = startX; x <= endX && x < WIDTH + X_OFFSET; ++x) {
+            for(double y = startY; y <= endY && y < HEIGHT + Y_OFFSET; ++y) {
                 if (p.contains(x, y)) {
-                    mScreenArray.putScalar(x - X_OFFSET, y - Y_OFFSET, value);
+                    mScreenArray.putScalar((int) (x - X_OFFSET), (int) (y - Y_OFFSET), value);
                 }
             }
         }
@@ -189,16 +189,16 @@ public class UCObservation {
 
     private void fillPolygon(Poly obj, double value) {
         Rectangle rect = obj.getBounds();
-        int startX = (int) rect.getX();
-        int startY = (int) rect.getY();
-        int endX = startX + (int) rect.getWidth();
-        int endY = startY + (int) rect.getHeight();
+        double startX = rect.getX();
+        double startY = rect.getY();
+        double endX = startX + rect.getWidth();
+        double endY = startY + rect.getHeight();
         Polygon p = obj.polygon;
 
-        for (int x = startX; x <= endX; ++x) {
-            for (int y = startY; y <= endY; ++y) {
+        for(double x = startX; x <= endX && x < WIDTH + X_OFFSET; ++x) {
+            for(double y = startY; y <= endY && y < HEIGHT + Y_OFFSET; ++y) {
                 if (p.contains(x, y)) {
-                    mScreenArray.putScalar(x - X_OFFSET, y - Y_OFFSET, value);
+                    mScreenArray.putScalar((int) (x - X_OFFSET), (int) (y - Y_OFFSET), value);
                 }
             }
         }

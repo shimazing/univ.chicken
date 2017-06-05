@@ -124,5 +124,10 @@ public class UCAction {
         return trajs;
     }
 
-
+    private int getTapTime(Rectangle sling, Point targetPoint, double radian, double percentile) {
+        Point refPoint = getReferencePoint(sling);
+        double velocity = getVelocity(radian);
+        int distance = (int) ( (refPoint.x - targetPoint.x) * percentile / (sling.height + sling.width));
+        return (int) (distance / (velocity * Math.cos(radian)) * TIME_UNIT);
+    }
 }

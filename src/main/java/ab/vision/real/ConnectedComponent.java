@@ -117,7 +117,7 @@ public class ConnectedComponent {
                     }
                 }
             }
-            // add point to edge
+            // add pivot to edge
             else
                 _edgePoints.add(p);
         }
@@ -172,7 +172,7 @@ public class ConnectedComponent {
         Point prev = null;
         Point next = null;
         
-        // search for starting point
+        // search for starting pivot
         for (int x = 0; x < _width && current == null; x++)
         for (int y = 0; y < _height; y++)
         {
@@ -188,7 +188,7 @@ public class ConnectedComponent {
         path[0] = current;
         int length = 1;
         
-        // walk in the anticlockwise direction until initial point
+        // walk in the anticlockwise direction until initial pivot
         // is returned to
         next = clockwise(current, prev);
         while (!(next.equals(path[0])))
@@ -220,7 +220,7 @@ public class ConnectedComponent {
             int xDiff = ahead.x - p.x;
             double angle = atan[yDiff + WINDOW_SIZE][xDiff + WINDOW_SIZE];
             
-            // if point adding unsuccessful
+            // if pivot adding unsuccessful
             double change = line.addPoint(p, angle, _angleThreshold);
             if (change != 0)
             {
@@ -277,7 +277,7 @@ public class ConnectedComponent {
             double min2 = 99999;
             double max2 = -99999;
             
-            // rotate each point about the origin and record min/max x,y coordinates
+            // rotate each pivot about the origin and record min/max x,y coordinates
             for (Point p : corners)
             {
                 double p1 = p.x * Math.cos(theta) + p.y * Math.sin(theta);
@@ -504,7 +504,7 @@ public class ConnectedComponent {
             _firstTime = false;
         }
         
-        // initialise neighbour point map
+        // initialise neighbour pivot map
         int width = map[0].length;
         int height = map.length;
         _connectedPoint = new Point[height][width][8];
@@ -557,10 +557,10 @@ public class ConnectedComponent {
     private final static int yClock[][] = {{1, 0, 0},
                                            {1, 0, -1},
                                            {0, 0, -1}};
-    /* find the next point to trace in Moore-Neighbourhood
-     * @param   p - the current contour point
-     *          prev - point just examined
-     * @return  point connected to p which is in the anticlockwise
+    /* find the next pivot to trace in Moore-Neighbourhood
+     * @param   p - the current contour pivot
+     *          prev - pivot just examined
+     * @return  pivot connected to p which is in the anticlockwise
      *          direction from p to prev
      */
     private static Point clockwise(Point p, Point prev)

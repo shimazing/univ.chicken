@@ -32,7 +32,7 @@ import ab.vision.GameStateExtractor.GameState;
 import ab.vision.Vision;
 
 /**
- * Util class for basic functions
+ * UCUtils class for basic functions
  * 
  */
 public class ActionRobot {

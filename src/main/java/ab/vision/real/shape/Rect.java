@@ -75,7 +75,7 @@ public class Rect extends Body
     	 double angle1 = angle;
          double angle2 = perpendicular(angle1);
          
-         // starting point for drawing
+         // starting pivot for drawing
          double _xs, _ys;
          _ys = centerY + Math.sin(angle) * plength / 2 + 
               Math.sin(Math.abs(Math.PI/2 - angle)) * pwidth / 2;

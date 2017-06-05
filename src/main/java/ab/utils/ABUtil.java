@@ -48,7 +48,7 @@ public class ABUtil {
 		        return result;
 			}
 
-	//Return true if the target can be hit by releasing the bird at the specified release point
+	//Return true if the target can be hit by releasing the bird at the specified release pivot
 	public static boolean isReachable(Vision vision, Point target, Shot shot)
 	{ 
 		//test whether the trajectory can pass the target without considering obstructions

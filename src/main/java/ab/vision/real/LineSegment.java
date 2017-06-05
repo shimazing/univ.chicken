@@ -49,7 +49,7 @@ public class LineSegment {
     {
         if (angle != ConnectedComponent.ANGLE_UNDEFINED)
         {
-            // test point is not a corner
+            // test pivot is not a corner
             double diff = angleDiff(angle, prevAngle);
             
             // if the sign of angle change is reversed
@@ -82,7 +82,7 @@ public class LineSegment {
         return 0;
     }
     
-    /* draw start point of the line onto canvas */
+    /* draw start pivot of the line onto canvas */
     public void draw(Graphics2D g, int left, int top)
     {        
         g.setColor(Color.CYAN);

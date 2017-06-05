@@ -156,7 +156,7 @@ public class NaiveAgent implements Runnable {
 					ABObject pig = pigs.get(randomGenerator.nextInt(pigs.size()));
 					
 					Point _tpt = pig.getCenter();// if the target is very close to before, randomly choose a
-					// point near it
+					// pivot near it
 					if (prevTarget != null && distance(prevTarget, _tpt) < 10) {
 						double _angle = randomGenerator.nextDouble() * Math.PI * 2;
 						_tpt.x = _tpt.x + (int) (Math.cos(_angle) * 10);
@@ -188,12 +188,12 @@ public class NaiveAgent implements Runnable {
 					else
 						if(pts.isEmpty())
 						{
-							System.out.println("No release point found for the target");
+							System.out.println("No release pivot found for the target");
 							System.out.println("Try a shot with 45 degree");
 							releasePoint = tp.findReleasePoint(sling, Math.PI/4);
 						}
 					
-					// Get the reference point
+					// Get the reference pivot
 					Point refPoint = tp.getReferencePoint(sling);
 
 

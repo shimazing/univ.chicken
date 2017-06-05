@@ -239,7 +239,7 @@ public class ClientNaiveAgent implements Runnable {
 
 					
 					// if the target is very close to before, randomly choose a
-					// point near it
+					// pivot near it
 					if (prevTarget != null && distance(prevTarget, _tpt) < 10) {
 						double _angle = randomGenerator.nextDouble() * Math.PI * 2;
 						_tpt.x = _tpt.x + (int) (Math.cos(_angle) * 10);
@@ -271,7 +271,7 @@ public class ClientNaiveAgent implements Runnable {
 							}
 							Point refPoint = tp.getReferencePoint(sling);
 
-					// Get the release point from the trajectory prediction module
+					// Get the release pivot from the trajectory prediction module
 					int tapTime = 0;
 					if (releasePoint != null) {
 						double releaseAngle = tp.getReleaseAngle(sling,

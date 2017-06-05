@@ -50,7 +50,7 @@ public class TrajectoryPlanner {
     // the trajectory points
     ArrayList<Point> _trajectory;
     
-    // reference point and current scale
+    // reference pivot and current scale
     private Point _ref;
     private double _scale;
 
@@ -74,7 +74,7 @@ public class TrajectoryPlanner {
         double Syx = 0.0;
         double Syx2 = 0.0;
 
-        // find scene scale and reference point
+        // find scene scale and reference pivot
         double sceneScale = getSceneScale(slingshot);
         Point refPoint = getReferencePoint(slingshot);
         
@@ -115,12 +115,12 @@ public class TrajectoryPlanner {
         _trajSet = false;
     }
     
-    /* Calculate the y-coordinate of a point on the set trajectory
+    /* Calculate the y-coordinate of a pivot on the set trajectory
      *
      * @param   sling - bounding rectangle of the slingshot
-     *          releasePoint - point the mouse click is released from
-     *          x - x-coordinate (on screen) of the requested point
-     * @return  y-coordinate (on screen) of the requested point
+     *          releasePoint - pivot the mouse click is released from
+     *          x - x-coordinate (on screen) of the requested pivot
+     * @return  y-coordinate (on screen) of the requested pivot
      */
     public int getYCoordinate(Rectangle sling, Point releasePoint, int x)
     {
@@ -132,9 +132,9 @@ public class TrajectoryPlanner {
         return _ref.y - (int)((_a * xn * xn + _b * xn) * _scale);
     }
     
-    /* Estimate launch points given a desired target point using maximum velocity
-     * If there are two launch point for the target, they are both returned in
-     * the list {lower point, higher point)
+    /* Estimate launch points given a desired target pivot using maximum velocity
+     * If there are two launch pivot for the target, they are both returned in
+     * the list {lower pivot, higher pivot)
      * Note - angles greater than 75 are not considered
      *
      * @param   slingshot - bounding rectangle of the slingshot
@@ -222,7 +222,7 @@ public class TrajectoryPlanner {
         //System.out.println("Two angles: " + Math.toDegrees(theta1) + ", " + Math.toDegrees(theta2));
             
         
-        // add the higher point if it is below 75 degrees and not same as first
+        // add the higher pivot if it is below 75 degrees and not same as first
         if (theta2 < Math.toRadians(75) && theta2 != theta1 && bestError < 1000)
             pts.add(findReleasePoint(slingshot, theta2));
         
@@ -230,11 +230,11 @@ public class TrajectoryPlanner {
     }
    
        
-    /* the estimated tap time given the tap point
+    /* the estimated tap time given the tap pivot
      *
      * @param   sling - bounding box of the slingshot
-     *          release - point the mouse clicked was released from
-     *          tapPoint - point the tap should be made
+     *          release - pivot the mouse clicked was released from
+     *          tapPoint - pivot the tap should be made
      * @return  tap time (relative to the release time) in milli-seconds
      */
     protected int getTimeByDistance(Rectangle sling, Point release, Point tapPoint)
@@ -252,15 +252,15 @@ public class TrajectoryPlanner {
     }
  
    
-    /* Choose a trajectory by specifying the sling location and release point
+    /* Choose a trajectory by specifying the sling location and release pivot
      * Derive all related parameters (angle, velocity, equation of the parabola, etc)
      *
      * @param   sling - bounding rectangle of the slingshot
-     *          releasePoint - point where the mouse click was released from
+     *          releasePoint - pivot where the mouse click was released from
      */
     public void setTrajectory(Rectangle sling, Point releasePoint)
     {
-        // don't update parameters if the ref point and release point are the same
+        // don't update parameters if the ref pivot and release pivot are the same
         if (_trajSet &&
             _ref != null && _ref.equals(getReferencePoint(sling)) &&
             _release != null && _release.equals(releasePoint))
@@ -301,7 +301,7 @@ public class TrajectoryPlanner {
      *
      * @param   canvas - the canvas to draw onto
      *          slingshot - bounding rectangle of the slingshot
-     *          releasePoint - point where the mouse click was released from
+     *          releasePoint - pivot where the mouse click was released from
      * @return  the canvas with trajectory drawn
      */
     public BufferedImage plotTrajectory(BufferedImage canvas, Rectangle slingshot, Point releasePoint) {
@@ -329,11 +329,11 @@ public class TrajectoryPlanner {
         return plotTrajectory(canvas, slingshot, bird);
     }
 
-    /* find the release point given the sling location and launch angle, using maximum velocity
+    /* find the release pivot given the sling location and launch angle, using maximum velocity
      *
      * @param   sling - bounding rectangle of the slingshot
      *          theta - launch angle in radians (anticlockwise from positive direction of the x-axis)
-     * @return  the release point on screen
+     * @return  the release pivot on screen
      */
     public Point findReleasePoint(Rectangle sling, double theta)
     {
@@ -344,12 +344,12 @@ public class TrajectoryPlanner {
         return release;
     }
     
-    /* find the release point given the sling location, launch angle and velocity
+    /* find the release pivot given the sling location, launch angle and velocity
      *
      * @param   sling - bounding rectangle of the slingshot
      *          theta - launch angle in radians (anticlockwise from positive direction of the x-axis)
      *          v - exit velocity as a proportion of the maximum velocity (maximum STRETCH)
-     * @return  the release point on screen
+     * @return  the release pivot on screen
      */
     public Point findReleasePoint(Rectangle sling, double theta, double v)
     {
@@ -360,7 +360,7 @@ public class TrajectoryPlanner {
         return release;
     }
     
-    // find the reference point given the sling
+    // find the reference pivot given the sling
     public Point getReferencePoint(Rectangle sling)
     {
         Point p = new Point((int)(sling.x + X_OFFSET * sling.width), (int)(sling.y + Y_OFFSET * sling.width));

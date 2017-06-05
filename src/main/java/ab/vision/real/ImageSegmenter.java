@@ -220,7 +220,7 @@ public class ImageSegmenter {
         findGroundLevel();
     }
     
-    /* Assign a class label to every point in the screenshot
+    /* Assign a class label to every pivot in the screenshot
      */
     private void classifyPixels()
     {
@@ -233,7 +233,7 @@ public class ImageSegmenter {
     
     /* find edges in the image, using the custom edge detector
      * @return  boolean map in the form isEdge[y][x], where isEdge[y][x]
-     *          means point (x, y) is an edge
+     *          means pivot (x, y) is an edge
      */
     private boolean[][] findEdges()
     {
@@ -692,7 +692,7 @@ public class ImageSegmenter {
     
     
     /* custom defined distance metric
-     * @param   coordinates of the two point to compare
+     * @param   coordinates of the two pivot to compare
      * @return  weighted distance between color of the points in HSV space
      */
     private int distance(int x1, int y1, int x2, int y2)

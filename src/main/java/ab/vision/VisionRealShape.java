@@ -27,7 +27,7 @@ import ab.vision.real.shape.Circle;
 
 public class VisionRealShape 
 {
-    // offset constants for calculating reference point
+    // offset constants for calculating reference pivot
     private static double X_OFFSET = 0.188;
     private static double Y_OFFSET = 0.156;
     private final static int unassigned = -1;
@@ -46,7 +46,7 @@ public class VisionRealShape
     private ArrayList<ConnectedComponent> _draw = null;
     private ArrayList<Body> _drawShape = null;
     
-    // the reference point (point birds are launched from)
+    // the reference pivot (pivot birds are launched from)
     private Point _ref = null;
     
     // size of the screen
@@ -74,7 +74,7 @@ public class VisionRealShape
         _draw = new ArrayList<ConnectedComponent>();
         _drawShape = new ArrayList<Body>();
      
-        // find the slingshot and reference point
+        // find the slingshot and reference pivot
         findSling();
       
     }
@@ -104,7 +104,7 @@ public class VisionRealShape
         _draw.add(sling);
         _drawShape.add(sling.getBody());
         
-        // find bounding box of the slingshot and reference point
+        // find bounding box of the slingshot and reference pivot
         int bound[] = sling.boundingBox();
         _sling = new Rectangle(bound[0], bound[1], bound[2]-bound[0], bound[3]-bound[1]);
         _ref = new Point();
@@ -225,7 +225,7 @@ public class VisionRealShape
         ArrayList<ConnectedComponent> traj = _seg.findTrajectory();
         ArrayList<Point> pts = new ArrayList<Point>();
         
-        // use distance from previous point to remove noise
+        // use distance from previous pivot to remove noise
         final int THRESHOLD = 30;
         final int TAP_SIZE = 20;
         final int MAX_ERROR = 3;
@@ -238,7 +238,7 @@ public class VisionRealShape
             if (Math.abs((bound[2]-bound[0]) - (bound[3]-bound[1])) > MAX_ERROR)
                 continue;
                 
-            // add the point if it is close to the previous trajectory point
+            // add the pivot if it is close to the previous trajectory pivot
             Point np = new Point((bound[0]+bound[2])/2, (bound[1]+bound[3])/2);
             if (np.x > _sling.x && distance(prev, np) < THRESHOLD)
             {
@@ -247,7 +247,7 @@ public class VisionRealShape
                 _draw.add(c);
 				_drawShape.add(c.getBody());
 				
-				// break if the tap point is found (special ability is used)
+				// break if the tap pivot is found (special ability is used)
 				if (c.getArea() > TAP_SIZE)
 				    break;
             }
@@ -319,7 +319,7 @@ public class VisionRealShape
             
         canvas.createGraphics().drawImage(image, 0, 0, null);
     }
-    // return the reference point
+    // return the reference pivot
     public Point getReferencePoint()
     {
         return _ref;

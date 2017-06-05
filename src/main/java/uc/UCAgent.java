@@ -64,19 +64,6 @@ public class UCAgent implements Runnable {
 
 
     public static void main(String args[]) throws IOException {
-        INDArray array = Nd4j.create(2 ,2);
-        array.putScalar(0, 0,2);
-        array.putScalar(0, 1, 2);
-        INDArray array2 = Nd4j.randn(5, 4);
-       or(int i = 1;i < _launchAngle.length;i++) {
-            System.out.println(_launchAngle[i] - _launchAngle[i-1]);
-        }
-
-        for(int i = 1;i < _launchVelocity.length;i++) {
-            System.out.println(_launchVelocity[i] - _launchVelocity[i-1]);
-        }
-
-        System.out.println(_launchAngle.length + "," + _launchVelocity.length);
 
     }
 }
