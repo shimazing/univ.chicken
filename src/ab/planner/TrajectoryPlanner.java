@@ -318,6 +318,12 @@ public class TrajectoryPlanner {
         
         return canvas; 
     }
+    
+    public Point getTrajectoryTarget(Rectangle slingshot, Point releasePoint) {
+        List<Point> trajectory = predictTrajectory(slingshot, releasePoint);
+        return trajectory.get(trajectory.size()-1);
+    }
+    
 
     // plot trajectory given the bounding box of the active bird
     public BufferedImage plotTrajectory(BufferedImage canvas, Rectangle slingshot, Rectangle activeBird) {

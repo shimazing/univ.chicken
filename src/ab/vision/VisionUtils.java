@@ -35,11 +35,11 @@ import Jama.Matrix;
 /* VisionUtils ------------------------------------------------------------ */
 
 public class VisionUtils {
-	public static int ss = 10; //shrink scale
-	public static int startX = 380;
-	public static int endX = 40;
+	public static int ss = 5; //shrink scale
+	public static int startX = 420;
+	public static int endX = 140;
 	public static int startY = 200;
-	public static int endY = 80;
+	public static int endY = 100;
 	
 	
 	public static Color fontColor = Color.blue;
@@ -223,14 +223,14 @@ public class VisionUtils {
 	
 		public static int[][] getState(int[][] scene){
 	
-			int maxValue = -1;
-			int minValue = Integer.MAX_VALUE;
-			for (int y =startY; y < scene.length-endY; y++) {
+			int maxValue = 511;
+			int minValue = 0;
+			/*for (int y =startY; y < scene.length-endY; y++) {
 				for (int x = startX; x < scene[y].length-endX; x++) {
 					maxValue = Math.max(maxValue, scene[y][x]);
 					minValue = Math.min(minValue, scene[y][x]);
 				}
-			}
+			}*/
 
 			if (maxValue == minValue)
 				maxValue = minValue + 1;
