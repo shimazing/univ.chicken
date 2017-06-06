@@ -45,7 +45,7 @@ import ab.vision.VisionUtils;
 import ab.vision.GameStateExtractor.GameState;
 import ab.vision.Vision;
 
-public class MFAgent implements Runnable {
+public class MFECAgent implements Runnable {
 	private ActionRobot aRobot;
 	private Random randomGenerator;
 	public int currentLevel = 1;
@@ -69,7 +69,7 @@ public class MFAgent implements Runnable {
 	public boolean newGame = true;
 
 	// a standalone implementation of the Naive Agent
-	public MFAgent() {
+	public MFECAgent() {
 		aRobot = new ActionRobot();
 		tp = new TrajectoryPlanner();
 		firstShot = true;
@@ -545,7 +545,7 @@ public class MFAgent implements Runnable {
 	}
 
 	public static void main(String args[]) {
-		MFAgent na = new MFAgent();
+		MFECAgent na = new MFECAgent();
 		if (args.length > 0)
 			na.currentLevel = Integer.parseInt(args[0]);
 		na.run();
