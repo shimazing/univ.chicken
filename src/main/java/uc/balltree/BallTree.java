@@ -5,6 +5,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.indexaccum.IMax;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+import uc.distance.DistanceFunction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,32 +19,36 @@ public class BallTree {
 
     private BallNode rootNode;
 
-    private INDArray indicies;
+    private INDArray indices;
     private DistanceFunction<Integer, Double> func;
     private INDArray data;
 
     private int nNodes;
-    private int nLeaves;
     private int maxDepth;
 
-
-    public BallTree(DistanceFunction<Integer, Double> func, INDArray data) {
+    private BallTree(DistanceFunction<Integer, Double> func, INDArray data) {
         this.func = func;
         this.data = data;
     }
 
+    public static BallTree buildTree(DistanceFunction<Integer, Double> func, INDArray data) throws Exception {
+        BallTree tree = new BallTree(func, data);
+        tree.buildTree();
+        return tree;
+    }
+
     public void buildTree() throws Exception {
+
         if(data == null) {
             throw new Exception("No data is supplied.");
         }
 
         nNodes = 0;
         maxDepth = 0;
-        nLeaves = 1;
-        indicies = Nd4j.arange(0, data.rows());
-        rootNode = new BallNode(0, indicies.length() - 1, 0);
-        rootNode.pivot = BallNode.calculateCentroid(indicies, data);
-        rootNode.radius = BallNode.calculateRadius(indicies, data, rootNode.pivot, func);
+        indices = Nd4j.arange(0, data.rows());
+        rootNode = new BallNode(0, indices.length() - 1, 0);
+        rootNode.pivot = BallNode.calculateCentroid(indices, data);
+        rootNode.radius = BallNode.calculateRadius(indices, data, rootNode.pivot, func);
         splitNodes(rootNode, maxDepth + 1, rootNode.radius);
     }
 
@@ -52,10 +57,8 @@ public class BallTree {
             return;
         }
 
-        nLeaves--;
         splitNodes(node, nNodes);
         nNodes += 2;
-        nLeaves += 2;
 
         if(maxDepth < depth) {
             maxDepth = depth;
@@ -89,7 +92,7 @@ public class BallTree {
             curDist = func.distance(furthest2, rowDatum);
             double _dist = distList.getDouble(i);
             if(curDist < _dist) {
-                swap(indicies, node.end - nRight, node.start + i);
+                swap(indices, node.end - nRight, node.start + i);
                 swap(distList, distList.length() - 1 - nRight, i);
                 nRight++;
                 i--;
@@ -100,34 +103,37 @@ public class BallTree {
         }
 
         node.left = new BallNode(node.start, node.end - nRight, numNodesCreated + 1,
-                BallNode.calculateCentroid(node.start, node.end - nRight, indicies, data),
-                BallNode.calculateRadius(node.start, node.end - nRight, indicies, data, pivot, func));
+                BallNode.calculateCentroid(node.start, node.end - nRight, indices, data),
+                BallNode.calculateRadius(node.start, node.end - nRight, indices, data, pivot, func));
 
         node.right = new BallNode(node.end - nRight + 1, node.end, numNodesCreated + 2,
-                BallNode.calculateCentroid(node.end - nRight + 1, node.end, indicies, data),
-                BallNode.calculateRadius(node.end - nRight + 1, node.end, indicies, data, pivot, func));
+                BallNode.calculateCentroid(node.end - nRight + 1, node.end, indices, data),
+                BallNode.calculateRadius(node.end - nRight + 1, node.end, indices, data, pivot, func));
     }
 
 
-    public List<Pair<Double, INDArray>> knn(INDArray target, int k) throws Exception {
+    public List<Pair<Double, Integer>> knn(INDArray target, int k) throws Exception {
         Heap heap = new Heap(k);
         knn(heap, rootNode, target, k);
-        List<Pair<Double, INDArray>> neighbors = new ArrayList<>();
+        List<Pair<Double, Integer>> neighbors = new ArrayList<>();
 
         while(heap.noOfKthNearest() > 0) {
             HeapElement h = heap.getKthNearest();
-            neighbors.add(new Pair<>(h.distance, data.getRow(h.index)));
+            neighbors.add(new Pair<>(h.distance, h.index));
         }
         while(heap.size() > 0) {
             HeapElement h = heap.get();
-            neighbors.add(new Pair<>(h.distance, data.getRow(h.index)));
+            neighbors.add(new Pair<>(h.distance, h.index));
         }
         return neighbors;
     }
 
-
-    public List<Pair<Double, INDArray>> nn(INDArray target) throws Exception {
-        return knn(target, 1);
+    public Pair<Double, Integer> nn(INDArray target) throws Exception {
+        List<Pair<Double, Integer>> nn = knn(target, 1);
+        if(nn != null && nn.size() > 0) {
+            return nn.get(0);
+        }
+        return null;
     }
 
     private void knn(Heap heap, BallNode node, INDArray target, int k) throws Exception {
@@ -167,13 +173,13 @@ public class BallTree {
             throw new Exception("Only one leaf is assigned");
         } else {
             for(int i = node.start; i <= node.end; i++) {
-                int index = indicies.getInt(i);
+                int index = indices.getInt(i);
                 if(target.neq(data.getRow(index)).sumNumber().doubleValue() == 0) {
                     continue;
                 }
                 if(heap.totalSize() < k) {
                     dist = func.distance(target, data.getRow(index));
-                    heap.put(indicies.getInt(i), dist);
+                    heap.put(indices.getInt(i), dist);
                 } else {
                     HeapElement head = heap.peek();
                     dist = func.distance(target, data.getRow(index));

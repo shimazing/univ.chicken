@@ -1,4 +1,4 @@
-package uc.balltree;
+package uc.distance;
 
 import org.deeplearning4j.berkeley.Pair;
 import org.nd4j.linalg.api.ndarray.INDArray;

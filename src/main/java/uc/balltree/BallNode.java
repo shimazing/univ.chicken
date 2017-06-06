@@ -2,17 +2,10 @@ package uc.balltree;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.accum.Mean;
-import org.nd4j.linalg.api.ops.impl.accum.distances.*;
-import org.nd4j.linalg.api.ops.impl.accum.distances.EuclideanDistance;
-import org.nd4j.linalg.factory.NDArrayFactory;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.indexing.SpecifiedIndex;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import uc.distance.DistanceFunction;
 
 /**
  * Created by keltp on 2017-06-05.

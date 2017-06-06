@@ -49,12 +49,11 @@ public class UCAction {
         return mAngle;
     }
 
-
     public double getTapTimes() {
         return mTapTime;
     }
 
-    public static List<UCAction> getActions() {
+    public static List<UCAction> createActions() {
         int id = 0;
         List<UCAction> actions = new ArrayList<>();
         for(double angle : ANGLES) {
