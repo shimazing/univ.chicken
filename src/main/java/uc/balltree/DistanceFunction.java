@@ -9,11 +9,7 @@ import org.nd4j.linalg.indexing.INDArrayIndex;
  */
 public interface DistanceFunction<K extends Integer, V extends Double> {
     double distance(INDArray a, INDArray b);
-    INDArray distanceArray(INDArray fullData, INDArray b);
-    INDArray distanceArray(int start, int end, INDArray fullData, INDArray b);
+    INDArray distances(INDArray fullData, INDArray b);
     Pair<K, V> maxDistance(INDArray fullData, INDArray b);
     Pair<K, V> minDistance(INDArray fullData, INDArray b);
-    Pair<K, V> maxDistance(int start, int end, INDArray fullData, INDArray b);
-    Pair<K, V> minDistance(int start, int end, INDArray fullData, INDArray b);
-
 }

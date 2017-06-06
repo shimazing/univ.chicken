@@ -21,13 +21,8 @@ public class EuclideanDistance implements DistanceFunction<Integer, Double> {
     }
 
     @Override
-    public INDArray distanceArray(INDArray fullData, INDArray b) {
+    public INDArray distances(INDArray fullData, INDArray b) {
         return fullData.subRowVector(b).norm2(1);
-    }
-
-    @Override
-    public INDArray distanceArray(int start, int end, INDArray fullData, INDArray b) {
-        return fullData.get(NDArrayIndex.interval(start, end, true), NDArrayIndex.all()).subRowVector(b).norm2(1);
     }
 
     @Override
@@ -44,17 +39,5 @@ public class EuclideanDistance implements DistanceFunction<Integer, Double> {
                 Nd4j.getExecutioner().execAndReturn(new Min(array)).getFinalResult().doubleValue());
     }
 
-    @Override
-    public Pair<Integer, Double> maxDistance(int start, int end, INDArray fullData, INDArray b) {
-        INDArray array = fullData.get(NDArrayIndex.interval(start, end, true), NDArrayIndex.all()).subRowVector(b).norm2(1);
-        return new Pair<>(Nd4j.getExecutioner().execAndReturn(new IMax(array)).getFinalResult(),
-                Nd4j.getExecutioner().execAndReturn(new Max(array)).getFinalResult().doubleValue());
-    }
 
-    @Override
-    public Pair<Integer, Double> minDistance(int start, int end, INDArray fullData, INDArray b) {
-        INDArray array = fullData.get(NDArrayIndex.interval(start, end, true), NDArrayIndex.all()).subRowVector(b).norm2(1);
-        return new Pair<>(Nd4j.getExecutioner().execAndReturn(new IMin(array)).getFinalResult(),
-                Nd4j.getExecutioner().execAndReturn(new Min(array)).getFinalResult().doubleValue());
-    }
 }

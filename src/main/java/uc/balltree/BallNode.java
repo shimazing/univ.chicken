@@ -8,6 +8,7 @@ import org.nd4j.linalg.factory.NDArrayFactory;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+import org.nd4j.linalg.indexing.SpecifiedIndex;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,30 +62,31 @@ public class BallNode {
         this.n = end - start + 1;
     }
 
-    public static INDArray calculateCentroid(INDArray data) {
-        return Nd4j.getExecutioner().exec(new Mean(data), 0);
+    public static INDArray calculateCentroid(INDArray indices, INDArray data) {
+        SpecifiedIndex index = new SpecifiedIndex(indices.data().asInt());
+        INDArray subArray = data.get(index, NDArrayIndex.all());
+        return Nd4j.getExecutioner().exec(new Mean(subArray), 0);
     }
 
-    public static INDArray calculateCentroid(int start, int end, INDArray data) {
-        return Nd4j.getExecutioner().exec(new Mean(data.get(NDArrayIndex.interval(start, end, true), NDArrayIndex.all())), 0);
+    public static INDArray calculateCentroid(int start, int end, INDArray indices, INDArray data) {
+        INDArray subIndicesArray = indices.get(NDArrayIndex.interval(start, end, true));
+        SpecifiedIndex index = new SpecifiedIndex(subIndicesArray.data().asInt());
+        INDArray subArray = data.get(index, NDArrayIndex.all());
+        return Nd4j.getExecutioner().exec(new Mean(subArray), 0);
     }
 
-    public static double calculateRadius(int start, int end, INDArray data, INDArray pivot, DistanceFunction func) {
-        double radius = (double) func.maxDistance(start, end, data, pivot).getSecond();
+    public static double calculateRadius(int start, int end, INDArray indices, INDArray data, INDArray pivot, DistanceFunction func) {
+        INDArray subIndicesArray = indices.get(NDArrayIndex.interval(start, end, true));
+        SpecifiedIndex index = new SpecifiedIndex(subIndicesArray.data().asInt());
+        INDArray subArray = data.get(index, NDArrayIndex.all());
+        double radius = (double) func.maxDistance(subArray, pivot).getSecond();
         return Math.sqrt(radius);
     }
 
-    public static double calculateRadius(INDArray data, INDArray pivot, DistanceFunction func) {
-        double radius = (double) func.maxDistance(data, pivot).getSecond();
+    public static double calculateRadius(INDArray indices, INDArray data, INDArray pivot, DistanceFunction func) {
+        SpecifiedIndex index = new SpecifiedIndex(indices.data().asInt());
+        INDArray subArray = data.get(index, NDArrayIndex.all());
+        double radius = (double) func.maxDistance(subArray, pivot).getSecond();
         return Math.sqrt(radius);
-    }
-
-    public static double calculateRadius(BallNode child1, BallNode child2, INDArray pivot, DistanceFunction func) {
-        INDArray p1 = child1.pivot;
-        INDArray p2 = child2.pivot;
-
-        double radius = child1.radius + child2.radius + func.distance(p1, p2);
-
-        return radius / 2;
     }
 }

@@ -14,7 +14,11 @@ import org.nd4j.linalg.api.ops.impl.accum.distances.EuclideanDistance;
 import org.nd4j.linalg.api.ops.impl.indexaccum.IMax;
 import org.nd4j.linalg.api.ops.impl.scalar.comparison.ScalarEquals;
 import org.nd4j.linalg.api.ops.impl.transforms.comparison.EqualTo;
+import org.nd4j.linalg.exception.ND4JException;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.INDArrayIndex;
+import org.nd4j.linalg.indexing.NDArrayIndex;
+import org.nd4j.linalg.indexing.SpecifiedIndex;
 import org.nd4j.linalg.indexing.conditions.EqualsCondition;
 import org.nd4j.linalg.indexing.conditions.NotEqualsCondition;
 import uc.balltree.BallNode;
@@ -22,6 +26,7 @@ import uc.balltree.BallTree;
 import uc.balltree.HammingDistance;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,41 +52,33 @@ public class Test {
             slingshot = vision.findSlingshotMBR();
         }
         UCObservation.generateObservation(ar, new File("d:/desktop/aibirds/test.png"), new File("d:/desktop/aibirds/test-1.png"));*/
-        /*INDArray arrays = Nd4j.randn(50, 2, 12345);
-        List<INDArray> list = new ArrayList<>();
-        for(int i = 0; i < arrays.rows();i++) {
-            list.add(arrays.getRow(i));
-        }
 
-        for(INDArray array : list) {
-            System.out.println(array.toString());
-        }
+        INDArray arrays = Nd4j.randn(50, 2, 12345);
 
-        BallTree tree = new BallTree(new uc.balltree.EuclideanDistance(), list);
+        BallTree tree = new BallTree(new uc.balltree.EuclideanDistance(), arrays);
+        INDArray point = Nd4j.create(new double[]{-.5, -2});
         tree.buildTree();
-        List<Pair<Double, INDArray>> result = tree.knn(list.get(5), 5);
-        for(Pair<Double, INDArray> pair : result) {
-            System.out.println(pair.toString());
-        }*/
-        INDArray a1 = Nd4j.zeros(1, 10).addi(10);
-        INDArray a2 = Nd4j.zeros(2, 10).addi(20);
-        a2.putScalar(1, 5, 15);
-        INDArray a3 = Nd4j.zeros(1, 10).addi(20);
-        a3.putScalar(0, 9, 532);
-        INDArray a4 = Nd4j.zeros(1, 10).addi(20);
+        List<Pair<Double, INDArray>> result = tree.knn(point, 5);
 
-        INDArray r1 = a2.getRow(0).dup();
-        INDArray r2 = a2.getRow(1);
-        a2.putRow(0, r2);
-        a2.putRow(1, r1);
-        System.out.println(a2.subRowVector(a1));
-        System.out.println(a2.subRowVector(a1).norm2(1));
-        System.out.println(Nd4j.getExecutioner().execAndReturn(new IMax(a2.subRowVector(a1).norm2(1))).getFinalResult());
-        System.out.println(Nd4j.getExecutioner().execAndReturn(new Max(a2.subRowVector(a1).norm2(1))).getFinalResult().doubleValue());
-        System.out.println(a1.sub(a3).norm2(1));
+        FileWriter writer = new FileWriter(new File("d:/desktop/test2.csv"));
+        writer.write("x,y,dist" + System.lineSeparator());
+        writer.write(point.getDouble(0) + "," + point.getDouble(1) + "," + 1 + System.lineSeparator());
 
-        double v2 = a3.sub(a4).neq(0).sumNumber().doubleValue();
+        for(int i = 0;i < arrays.rows();i++) {
+            INDArray a = arrays.getRow(i);
+            writer.write(a.getDouble(0) + "," + a.getDouble(1) + "," );
 
-        System.out.println(v2);
+            for(Pair<Double, INDArray> r : result) {
+                INDArray b = (INDArray) r.getSecond();
+                if(b.neq(a).sumNumber().doubleValue() == 0) {
+                    writer.write(2);
+                }
+            }
+
+            writer.write(System.lineSeparator());
+        }
+        writer.flush();
+        writer.close();
+
     }
 }

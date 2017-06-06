@@ -4,7 +4,7 @@ import org.deeplearning4j.berkeley.Pair;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.indexaccum.IMax;
 import org.nd4j.linalg.factory.Nd4j;
-import org.nd4j.linalg.indexing.INDArrayIndex;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,11 +15,10 @@ import java.util.List;
 public class BallTree {
     private final int maxInstancesInLeaf = 40;
     private final double  maxRelativeLeafRadius = 0.001;
-    private final boolean fullyContainChildBalls = false;
 
     private BallNode rootNode;
 
-    private int[] indicies;
+    private INDArray indicies;
     private DistanceFunction<Integer, Double> func;
     private INDArray data;
 
@@ -41,14 +40,10 @@ public class BallTree {
         nNodes = 0;
         maxDepth = 0;
         nLeaves = 1;
-        for(int i = 0;i < indicies.length; i++) {
-            indicies[i] = i;
-        }
-
-        rootNode = new BallNode(0, indicies.length - 1, 0);
-        rootNode.pivot = BallNode.calculateCentroid(data);
-        rootNode.radius = BallNode.calculateRadius(data, rootNode.pivot, func);
-
+        indicies = Nd4j.arange(0, data.rows());
+        rootNode = new BallNode(0, indicies.length() - 1, 0);
+        rootNode.pivot = BallNode.calculateCentroid(indicies, data);
+        rootNode.radius = BallNode.calculateRadius(indicies, data, rootNode.pivot, func);
         splitNodes(rootNode, maxDepth + 1, rootNode.radius);
     }
 
@@ -68,33 +63,23 @@ public class BallTree {
 
         splitNodes(node.left, depth + 1, rootRadius);
         splitNodes(node.right, depth + 1, rootRadius);
-
-        if(fullyContainChildBalls) {
-            node.radius = BallNode.calculateRadius(node.left, node.right, node.pivot, func);
-        }
     }
 
-    private void swapRows(int n1, int n2) {
-
+    private void swap(INDArray array, int n1, int n2) {
+        double temp = array.getDouble(n1);
+        array.putScalar(n1, array.getDouble(n2));
+        array.putScalar(n2, temp);
     }
-
-    private void swapCols(int n1, int n2) {
-
-    }
-
 
     private void splitNodes(BallNode node, int numNodesCreated) throws Exception {
-        double maxDist = Double.NEGATIVE_INFINITY;
-
         INDArray furthest1 = null;
         INDArray furthest2 = null;
         INDArray pivot = node.pivot;
-        INDArray temp;
 
         Pair<Integer, Double> p1 = func.maxDistance(data, pivot);
         furthest1 = data.getRow(p1.getFirst()).dup();
 
-        INDArray distList = func.distanceArray(node.start, node.start + node.n, data, furthest1);
+        INDArray distList = func.distances(data.get(NDArrayIndex.interval(node.start, node.start + node.n, false)), furthest1);
         furthest2 = data.getRow(Nd4j.getExecutioner().execAndReturn(new IMax(distList)).getFinalResult()).dup();
 
         int nRight = 0;
@@ -104,18 +89,8 @@ public class BallTree {
             curDist = func.distance(furthest2, rowDatum);
             double _dist = distList.getDouble(i);
             if(curDist < _dist) {
-
-            }
-            temp = data.get(indicies[i + node.start]);
-            curDist = func.distance(furthest2, temp);
-            if(curDist < distList[i]) {
-                int t = indicies[node.end - nRight];
-                indicies[node.end - nRight] = indicies[i + node.start];
-                indicies[i + node.start] = t;
-
-                double d = distList[distList.length - 1 - nRight];
-                distList[distList.length - 1 - nRight] = distList[i];
-                distList[i] = d;
+                swap(indicies, node.end - nRight, node.start + i);
+                swap(distList, distList.length() - 1 - nRight, i);
                 nRight++;
                 i--;
             }
@@ -134,18 +109,18 @@ public class BallTree {
     }
 
 
-  /* public List<Pair<Double, INDArray>> knn(INDArray target, int k) throws Exception {
+    public List<Pair<Double, INDArray>> knn(INDArray target, int k) throws Exception {
         Heap heap = new Heap(k);
         knn(heap, rootNode, target, k);
         List<Pair<Double, INDArray>> neighbors = new ArrayList<>();
 
         while(heap.noOfKthNearest() > 0) {
             HeapElement h = heap.getKthNearest();
-            neighbors.add(new Pair<>(h.distance, data.get(h.index)));
+            neighbors.add(new Pair<>(h.distance, data.getRow(h.index)));
         }
         while(heap.size() > 0) {
             HeapElement h = heap.get();
-            neighbors.add(new Pair<>(h.distance, data.get(h.index)));
+            neighbors.add(new Pair<>(h.distance, data.getRow(h.index)));
         }
         return neighbors;
     }
@@ -154,8 +129,6 @@ public class BallTree {
     public List<Pair<Double, INDArray>> nn(INDArray target) throws Exception {
         return knn(target, 1);
     }
-*/
-
 
     private void knn(Heap heap, BallNode node, INDArray target, int k) throws Exception {
         double dist = Double.NEGATIVE_INFINITY;
@@ -193,23 +166,24 @@ public class BallTree {
         } else if (node.left != null || node.right != null) {
             throw new Exception("Only one leaf is assigned");
         } else {
-           /* for(int i = node.start; i <= node.end; i++) {
-                if(target == data.get(indicies[i])) {
+            for(int i = node.start; i <= node.end; i++) {
+                int index = indicies.getInt(i);
+                if(target.neq(data.getRow(index)).sumNumber().doubleValue() == 0) {
                     continue;
                 }
                 if(heap.totalSize() < k) {
-                    dist = func.distance(target, data.get(indicies[i]));
-                    heap.put(indicies[i], dist);
+                    dist = func.distance(target, data.getRow(index));
+                    heap.put(indicies.getInt(i), dist);
                 } else {
                     HeapElement head = heap.peek();
-                    dist = func.distance(target, data.get(indicies[i]));
+                    dist = func.distance(target, data.getRow(index));
                     if(dist < head.distance) {
-                        heap.putBySubstitute(indicies[i], dist);
+                        heap.putBySubstitute(index, dist);
                     } else if (dist == head.distance) {
-                        heap.putKthNearest(indicies[i], dist);
+                        heap.putKthNearest(index, dist);
                     }
                 }
-            }*/
+            }
         }
     }
 }
