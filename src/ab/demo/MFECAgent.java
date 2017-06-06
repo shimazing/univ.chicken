@@ -82,16 +82,16 @@ public class MFECAgent implements Runnable {
 			ADic_Ag.put(action, new HashMap<Integer,Integer>()); 
 		}
 		
-		/*
-		// Read previous dic
+		
+		/*// Read previous dic
 		try{
-		    FileInputStream fis = new FileInputStream("AdicMap_17500.data");
+		    FileInputStream fis = new FileInputStream("AdicMap_2000.data");
 		    ObjectInputStream ois = new ObjectInputStream(fis);
 		    ADic_Ag = (HashMap<Double, HashMap<Integer, Integer>>) ois.readObject();
 		    ois.close();
 		    fis.close();
 		
-		    FileInputStream fis2 = new FileInputStream("str2arrayDic_17500.data");
+		    FileInputStream fis2 = new FileInputStream("str2arrayDic_2000.data");
 		    ObjectInputStream ois2 = new ObjectInputStream(fis2);
 		    hashToarrayStateDic = (HashMap<Integer,int[][]>) ois2.readObject();
 		    ois2.close();
@@ -103,8 +103,8 @@ public class MFECAgent implements Runnable {
 		 {
 		    System.out.println("File not found");
 		    c.printStackTrace();
-		 }
-		*/
+		 }*/
+		
 		
 		 ActionRobot.GoFromMainMenuToLevelSelection();
 	}
@@ -118,12 +118,15 @@ public class MFECAgent implements Runnable {
 			int cummReward = 0;
 			for(int i = t; i>0;i--) cummReward += rewardHist.get(i-1)*Math.pow(gamma, t-i);
 			
-			System.out.print("At timestep "+t+", for state: " + hashToarrayStateDic.get(statestr).toString() + ", action: "+action+ ", ");
+			System.out.print("At timestep "+t+", for state: " + statestr + ", action: "+action+ ", ");
 			if(ADic_Ag.get(action).containsKey(statestr)){
 				int prevReward = ADic_Ag.get(action).get(statestr);
-				if(prevReward < cummReward)
+				if(prevReward < cummReward){
 					System.out.println("reward is updated from " + prevReward + " to : "+cummReward);
 					ADic_Ag.get(action).put(statestr, cummReward);
+				}else{
+					System.out.println("reward is same with the previous one");
+				}
 			}else{
 				System.out.println("new reward is saved as : "+cummReward);
 				ADic_Ag.get(action).put(statestr, cummReward);
@@ -142,12 +145,13 @@ public class MFECAgent implements Runnable {
 		while (true) {
 			GameState state = solve();
 			if (state == GameState.WON) {
-				try {
+				/*try {
 					Thread.sleep(3000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
-				}
-
+				}*/
+				this.learn();
+				
 				//newGame일 때 레벨 별 스코어 저장
 				if(newGame){
 					int score = StateUtil.getScore(ActionRobot.proxy);
@@ -158,12 +162,13 @@ public class MFECAgent implements Runnable {
 				
 				if(trainingFlag){
 					//training일 때 성공하면 test로 바꾸고 다시 실행
-					this.learn();
 					trainingFlag = false;
 					aRobot.loadLevel(currentLevel);
 				}else{
-					//test일 때 성공하면 다음 판으로 넘어가기. 21판에서는 1판으로.
-					if(currentLevel==21){
+					//test일 때 성공하면 다음 판으로 넘어가기. 
+					//21판이거나, newGame == false 일때(즉  test 실패하고 트레이닝 해서 다시 test시 그 판만 성공했을 때)
+					//다시 1판부터 test 시작
+					if(!newGame || currentLevel==21){
 						newGame = true;
 						scores.clear();
 						currentLevel = 0;
@@ -195,7 +200,7 @@ public class MFECAgent implements Runnable {
 						Writer scorer;
 						try {
 							scorer = new BufferedWriter(new FileWriter("gameScore.txt", true));
-							scorer.append(totalScore+", Lev "+currentLevel);
+							scorer.append("\n Total Score: "+totalScore+", Lev "+currentLevel+", at timestamp "+numTimestamp);
 							scorer.close();
 						} catch (IOException e) {
 							e.printStackTrace();
@@ -276,9 +281,13 @@ public class MFECAgent implements Runnable {
 				
 				useMFEC = true;
 				double ag = -1;
-				ag = getAction(hashMFCstate);	
-				System.out.println("Best chosen angle : "+ ag);
-				if(ag<0) trainingFlag = true;
+				//test 모드일 때 optimal action 찾기
+				if(!trainingFlag) {
+					ag = getAction(hashMFCstate);
+					//test 모드더라도 action이 없으면 training 모드로 변환
+					if(ag<0) trainingFlag = true;
+				}
+				
 				
 				if(trainingFlag){
 					System.out.println("Training phase");
@@ -295,7 +304,7 @@ public class MFECAgent implements Runnable {
 						System.out.println("Block is chosen as a target");
 					}
 						
-					// estimate the trajectory
+					// estimate the release points
 					ArrayList<Point> pts = tp.estimateLaunchPoint(sling, targetPt);
 					
 					// do a high shot when entering a level to find an accurate velocity
@@ -317,7 +326,6 @@ public class MFECAgent implements Runnable {
 					System.out.println("Test phase");
 					releasePoint = tp.findReleasePoint(sling, Math.toRadians(ag));
 				}
-				
 					
 				// Get the reference point
 				Point refPoint = tp.getReferencePoint(sling);
@@ -332,18 +340,21 @@ public class MFECAgent implements Runnable {
 						case RedBird:
 							tapInterval = 0; break; 
 						case YellowBird:
-							tapInterval = 75; break;
+							tapInterval = 55; break;
 						case WhiteBird:
-							tapInterval =  85; break;
+							tapInterval =  65; break;
 						case BlackBird:
-							tapInterval =  95; break;
-						case BlueBird:
 							tapInterval =  75; break;
+						case BlueBird:
+							tapInterval =  55; break;
 						default:
 							tapInterval =  60;
 					}
 					
-					if(targetPt == null) targetPt = tp.getTrajectoryTarget(sling, releasePoint);
+					//tap interval을 test/training 동일하게 적용하기 위해 target point 다시 계산
+					targetPt = tp.getTrajectoryTarget(sling, releasePoint);
+					System.out.println("Estimated end point: ("+targetPt.x+","+targetPt.y+")");
+					
 					int tapTime = tp.getTapTime(sling, releasePoint, targetPt, tapInterval);
 					dx = (int)releasePoint.getX() - refPoint.x;
 					dy = (int)releasePoint.getY() - refPoint.y;
