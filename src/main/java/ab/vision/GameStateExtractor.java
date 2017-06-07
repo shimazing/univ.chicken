@@ -63,7 +63,6 @@ public class GameStateExtractor {
 	// create a game state extractor and load subimages
 	public GameStateExtractor() {
 		try {
-			System.out.println(new File("./resources/mainmenu.png").exists());
 			_mainmenu = ImageIO.read(new File(
 					"./resources/mainmenu.png"));
 			_episodemenu = ImageIO.read(new File(
