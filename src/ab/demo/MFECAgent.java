@@ -55,7 +55,7 @@ public class MFECAgent implements Runnable {
 	private boolean firstShot;
 	public static HashMap<Double, HashMap<Integer, Integer>> ADic_Ag;
 	public static HashMap<Integer,int[][]> hashToarrayStateDic;
-	public int numTimestamp = 1;
+	public int numTimestamp = 6001;
 	private int prevScore;
 	public boolean useMFEC = true; 
 	
@@ -67,6 +67,7 @@ public class MFECAgent implements Runnable {
 	public ArrayList<Integer> totalRewardHist = new ArrayList<Integer>();
 	public boolean trainingFlag = false;
 	public boolean newGame = true;
+	public int maxScore = Integer.MIN_VALUE;
 
 	// a standalone implementation of the Naive Agent
 	public MFECAgent() {
@@ -82,16 +83,15 @@ public class MFECAgent implements Runnable {
 			ADic_Ag.put(action, new HashMap<Integer,Integer>()); 
 		}
 		
-		
-		/*// Read previous dic
+		// Read previous dic
 		try{
-		    FileInputStream fis = new FileInputStream("AdicMap_2000.data");
+		    FileInputStream fis = new FileInputStream("AdicMap_6000.data");
 		    ObjectInputStream ois = new ObjectInputStream(fis);
 		    ADic_Ag = (HashMap<Double, HashMap<Integer, Integer>>) ois.readObject();
 		    ois.close();
 		    fis.close();
 		
-		    FileInputStream fis2 = new FileInputStream("str2arrayDic_2000.data");
+		    FileInputStream fis2 = new FileInputStream("str2arrayDic_6000.data");
 		    ObjectInputStream ois2 = new ObjectInputStream(fis2);
 		    hashToarrayStateDic = (HashMap<Integer,int[][]>) ois2.readObject();
 		    ois2.close();
@@ -103,9 +103,7 @@ public class MFECAgent implements Runnable {
 		 {
 		    System.out.println("File not found");
 		    c.printStackTrace();
-		 }*/
-		
-		
+		 }
 		 ActionRobot.GoFromMainMenuToLevelSelection();
 	}
 
@@ -125,7 +123,7 @@ public class MFECAgent implements Runnable {
 					System.out.println("reward is updated from " + prevReward + " to : "+cummReward);
 					ADic_Ag.get(action).put(statestr, cummReward);
 				}else{
-					System.out.println("reward is same with the previous one");
+					System.out.println("reward is less than previous one");
 				}
 			}else{
 				System.out.println("new reward is saved as : "+cummReward);
@@ -145,12 +143,6 @@ public class MFECAgent implements Runnable {
 		while (true) {
 			GameState state = solve();
 			if (state == GameState.WON) {
-				/*try {
-					Thread.sleep(3000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}*/
-				this.learn();
 				
 				//newGame일 때 레벨 별 스코어 저장
 				if(newGame){
@@ -158,6 +150,9 @@ public class MFECAgent implements Runnable {
 					System.out.println("Current Level Score: "+score);
 					if(!scores.containsKey(currentLevel)) scores.put(currentLevel, score);
 					else if(scores.get(currentLevel) < score) scores.put(currentLevel, score);
+				}else{
+					//newGame 아니면 학습
+					this.learn();
 				}
 				
 				if(trainingFlag){
@@ -197,6 +192,12 @@ public class MFECAgent implements Runnable {
 						}
 						System.out.println("This game's total score: " + totalScore);
 						
+						//max score 갱신시 Dic 저장
+						if(maxScore < totalScore){
+							saveMaxResultDic(totalScore,currentLevel,numTimestamp);
+							maxScore = totalScore;
+						}
+						
 						Writer scorer;
 						try {
 							scorer = new BufferedWriter(new FileWriter("gameScore.txt", true));
@@ -212,20 +213,14 @@ public class MFECAgent implements Runnable {
 				}
 				aRobot.restartLevel();
 			} else if (state == GameState.LEVEL_SELECTION) {
-				System.out
-				.println("Unexpected level selection page, go to the last current level : "
-						+ currentLevel);
+				System.out.println("Unexpected level selection page, go to the last current level : "+ currentLevel);
 				aRobot.loadLevel(currentLevel);
 			} else if (state == GameState.MAIN_MENU) {
-				System.out
-				.println("Unexpected main menu page, go to the last current level : "
-						+ currentLevel);
+				System.out.println("Unexpected main menu page, go to the last current level : "+ currentLevel);
 				ActionRobot.GoFromMainMenuToLevelSelection();
 				aRobot.loadLevel(currentLevel);
 			} else if (state == GameState.EPISODE_MENU) {
-				System.out
-				.println("Unexpected episode menu page, go to the last current level : "
-						+ currentLevel);
+				System.out.println("Unexpected episode menu page, go to the last current level : "+ currentLevel);
 				ActionRobot.GoFromMainMenuToLevelSelection();
 				aRobot.loadLevel(currentLevel);
 			}
@@ -269,6 +264,7 @@ public class MFECAgent implements Runnable {
 				int hashMFCstate = MFCstateStr.hashCode();
 				
 				if(!hashToarrayStateDic.containsKey(hashMFCstate)){
+					/*
 					BufferedImage stateImg = vision.getMBRVision().getStateImg();
 					File outputfile = new File("stateImages/Lev"+currentLevel+"_"+hashMFCstate+".jpg");
 					try {
@@ -276,6 +272,7 @@ public class MFECAgent implements Runnable {
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
+					*/
 					hashToarrayStateDic.put(hashMFCstate, MFCstate);
 				}
 				
@@ -466,6 +463,31 @@ public class MFECAgent implements Runnable {
          }
 	}
 	
+	public static void saveMaxResultDic(int totalScore, int lev, int ts){
+		try{
+            FileOutputStream fos = new FileOutputStream("AdicMap_"+totalScore+"by Lv"+lev+"at "+ts+".data");
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(ADic_Ag);
+            oos.close();
+            fos.close();
+            System.out.printf("New max score Adic is saved");
+         }catch(IOException ioe){
+                ioe.printStackTrace();
+         }
+		
+		try{
+			FileOutputStream fos = new FileOutputStream("str2arrayDic_"+totalScore+"by Lv"+lev+"at "+ts+".data");  
+            ObjectOutputStream oos = new ObjectOutputStream(fos);
+            oos.writeObject(hashToarrayStateDic);
+            oos.close();
+            fos.close();
+            System.out.printf("New max score str2arrayDic is saved");
+         }catch(IOException ioe){
+                ioe.printStackTrace();
+         }
+		 
+	}
+	
 	public static double getStateDist(int[][] state1, int[][] state2){
 		double sum = 0;
 		for(int i = 0 ; i < state1.length;i++){
@@ -482,7 +504,7 @@ public class MFECAgent implements Runnable {
 	}
 	
 	public static double getAction(int state){
-		int n = 3;
+		int n = 5;
 		int maxReward = -1;
 		double bestAction = -1;
 		int[][] arrayState1 = hashToarrayStateDic.get(state); 
