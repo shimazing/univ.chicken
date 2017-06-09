@@ -51,6 +51,7 @@ public class UCConfiguration {
     private double epsilonStart;
     private double epsilonMin;
     private double nStepsForEpsilonDecay;
+    private double epsilonRate;
     private double discountFactor;
     private int nEpochs;
     private int nStepsPerEpoch;
@@ -180,6 +181,9 @@ public class UCConfiguration {
         return distFunc;
     }
 
+    public double epsilonRate() {
+        return epsilonRate;
+    }
     private UCConfiguration() {}
 
     public void serializeToJson(File file) throws IOException {
@@ -398,6 +402,7 @@ public class UCConfiguration {
             conf.epsilonStart = this.epsilonStart;
             conf.epsilonMin = this.epsilonMin;
             conf.nStepsForEpsilonDecay = this.nStepsForEpsilonDecay;
+            conf.epsilonRate = (this.epsilonStart - this.epsilonMin) / this.nStepsForEpsilonDecay;
             conf.discountFactor = this.discountFactor;
             conf.nEpochs = this.nEpochs;
             conf.nStepsPerEpoch = this.nStepsPerEpoch;

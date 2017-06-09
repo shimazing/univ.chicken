@@ -16,11 +16,23 @@ import java.util.List;
  * Created by keltp on 2017-05-18.
  */
 public class UCState {
-    private static INDArray mState;
+    private INDArray state;
 
+    public INDArray state () {
+        return state.dup();
+    }
 
+    public static class Builder {
+        private INDArray projection;
 
+        public Builder(int nObsDimension, int nStateDimension, long seed) {
+            projection = Nd4j.randn(nObsDimension, nStateDimension, seed);
+        }
 
+        public UCState build(BufferedImage observation) {
+            return new UCState();
+        }
+    }
 
 
 }

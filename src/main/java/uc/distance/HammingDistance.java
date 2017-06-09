@@ -15,25 +15,26 @@ public class HammingDistance implements DistanceFunction<Integer, Double> {
 
     @Override
     public double distance(INDArray a, INDArray b) {
-        return a.sub(b).neq(0).sumNumber().doubleValue();
+        return 1 - (a.sub(b).eps(0).sumNumber().doubleValue() / a.length());
     }
 
     @Override
     public INDArray distances(INDArray fullData, INDArray b) {
-        return fullData.subRowVector(b).neq(0).sum(1);
+        return fullData.subRowVector(b).eps(0).sum(1).mul(-1).div(b.length()).add(1.0);
+
     }
 
 
     @Override
     public Pair<Integer, Double> maxDistance(INDArray fullData, INDArray b) {
-        INDArray array = fullData.subRowVector(b).neq(0).sum(1);
+        INDArray array = fullData.subRowVector(b).eps(0).sum(1).mul(-1).div(b.length()).add(1.0);
         return new Pair<>(Nd4j.getExecutioner().execAndReturn(new IMax(array)).getFinalResult(),
                 Nd4j.getExecutioner().execAndReturn(new Max(array)).getFinalResult().doubleValue());
     }
 
     @Override
     public Pair<Integer, Double> minDistance(INDArray fullData, INDArray b) {
-        INDArray array = fullData.subRowVector(b).neq(0).sum(1);
+        INDArray array = fullData.subRowVector(b).eps(0).sum(1).mul(-1).div(b.length()).add(1.0);
         return new Pair<>(Nd4j.getExecutioner().execAndReturn(new IMin(array)).getFinalResult(),
                 Nd4j.getExecutioner().execAndReturn(new Min(array)).getFinalResult().doubleValue());
     }

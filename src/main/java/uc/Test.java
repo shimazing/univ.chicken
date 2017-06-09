@@ -19,10 +19,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by keltp on 2017-05-16.
@@ -39,9 +37,25 @@ public class Test {
 
     public Test() throws Exception {
         robot = new ActionRobot();
-        FileWriter writer = new FileWriter("d:/desktop/aibirds/aibirds.csv");
-        for(int i = 1;i <= 21;i++) {
-            playLevel(writer, i);
+        FileWriter writer = new FileWriter("d:/desktop/aibirds/aibirds.csv", true);
+        TreeMap<Integer, Integer> map = new TreeMap<>();
+        map.put(8, 4);
+        map.put(9, 4);
+        map.put(11, 54);
+        map.put(12, 4);
+        map.put(13, 4);
+        map.put(14, 4);
+        map.put(15, 4);
+        map.put(16, 4);
+        map.put(17, 4);
+        map.put(18, 4);
+        map.put(19, 4);
+        map.put(20, 4);
+        map.put(21, 4);
+
+        for(Integer level : map.keySet()) {
+            int angle = map.get(level);
+            playLevel(writer, level, angle);
         }
         writer.close();
     }
@@ -63,15 +77,14 @@ public class Test {
         return sling;
     }
 
-    private void playLevel(FileWriter writer, int level) throws Exception{
+    private void playLevel(FileWriter writer, int level, int from) throws Exception{
         robot.loadLevel(level);
 
         while(robot.getState() != GameStateExtractor.GameState.PLAYING) {
             Thread.sleep(2000);
             robot.loadLevel(level);
         }
-
-        for(int angle = 4;angle <= 84;angle++) {
+        for(int angle = from;angle <= 77;angle++) {
             int n = 0;
             while(n < 5) {
                 System.out.println(String.format("Try to %s-th shot with angle %s in level %s", (n+1), angle, level));
@@ -85,6 +98,7 @@ public class Test {
                     for(Point traj : trajs) {
                         writer.write(String.format("%s,%s,%s,%s,%s,%s",level,angle,sling.getWidth(),sling.getHeight(),traj.getX(),traj.getY()) + System.lineSeparator());
                         writer.flush();
+                        //System.out.println(String.format("%s,%s,%s,%s,%s,%s",level,angle,sling.getWidth(),sling.getHeight(),traj.getX(),traj.getY()) + System.lineSeparator());
                     }
                     n++;
                 }

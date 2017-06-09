@@ -234,8 +234,6 @@ public class GameStateExtractor {
 	public int getScoreEndGame(BufferedImage screenshot) {
 		// crop score image
 		BufferedImage scoreImage = screenshot.getSubimage(370, 265, 100, 32);
-	
-		
 
         // transform template images into black-white format
 		BufferedImage[] endGameNumberTemplates = { extractNumber(_endGame0),
