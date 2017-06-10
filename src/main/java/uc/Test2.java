@@ -23,20 +23,9 @@ import java.util.List;
  */
 public class Test2 {
     public static void main(String args[]) throws IOException {
-        File dir = new File("d:/desktop/aibirds");
-        for(File f : dir.listFiles()) {
-            String fn = f.getName();
-            if(fn.endsWith(".png")) {
-                System.out.println(fn);
-                BufferedImage image = ImageIO.read(f);
-                Vision vision = new Vision(image);
-                List<ABObject> objs = vision.findPigsRealShape();
-                for(ABObject obj : objs) {
-                    System.out.print( ((Circle) obj).r + ", ");
-                }
-                System.out.println();
-            }
-        }
-
+        UCLog.i("INFO");
+        UCLog.w("WARNING");
+        UCLog.e("ERROR");
+        UCLog.e("Error Find", new Exception("ASDF"));
     }
 }

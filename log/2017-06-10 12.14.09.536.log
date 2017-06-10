@@ -1,0 +1,6 @@
+[2017-06-10 12:14:09.556] INFO - INFO
+[2017-06-10 12:14:09.558] WARNING - WARNING
+[2017-06-10 12:14:09.559] SEVERE - ERROR
+[2017-06-10 12:14:09.560] SEVERE - Error Find
+java.lang.Exception: ASDF
+	at uc.Test2.main(Test2.java:29)

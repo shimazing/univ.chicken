@@ -113,7 +113,7 @@ public class UCAgent implements Runnable {
     }
 
     private void step() throws Exception {
-        UCAction_ action;
+       /* UCAction_ action;
         UCState state;
         UCReward reward;
 
@@ -123,7 +123,7 @@ public class UCAgent implements Runnable {
         }
 
         BufferedImage observation = ActionRobot.doScreenShot();
-        state = UCStateBuilder_.buildState(observation);
+        //state = UCStateBuilder_.buildState(observation);
 
         if(state == null) {
             return;
@@ -144,7 +144,7 @@ public class UCAgent implements Runnable {
 
         if(action == -1) {
             return;
-        }
+        }*/
 
 
 
