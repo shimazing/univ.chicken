@@ -55,7 +55,7 @@ public class MFECAgent implements Runnable {
 	private boolean firstShot;
 	public static HashMap<Double, HashMap<Integer, Integer>> ADic_Ag;
 	public static HashMap<Integer,int[][]> hashToarrayStateDic;
-	public int numTimestamp = 6001;
+	public int numTimestamp = 3001;
 	private int prevScore;
 	public boolean useMFEC = true; 
 	
@@ -85,13 +85,13 @@ public class MFECAgent implements Runnable {
 		
 		// Read previous dic
 		try{
-		    FileInputStream fis = new FileInputStream("AdicMap_6000.data");
+		    FileInputStream fis = new FileInputStream("AdicMap_prev.data");
 		    ObjectInputStream ois = new ObjectInputStream(fis);
 		    ADic_Ag = (HashMap<Double, HashMap<Integer, Integer>>) ois.readObject();
 		    ois.close();
 		    fis.close();
 		
-		    FileInputStream fis2 = new FileInputStream("str2arrayDic_6000.data");
+		    FileInputStream fis2 = new FileInputStream("str2arrayDic_prev.data");
 		    ObjectInputStream ois2 = new ObjectInputStream(fis2);
 		    hashToarrayStateDic = (HashMap<Integer,int[][]>) ois2.readObject();
 		    ois2.close();
@@ -131,10 +131,6 @@ public class MFECAgent implements Runnable {
 			}
 		}
 		/*############## End Learning ############## */
-		rewardHist.clear(); // reward history
-		prevScore  = 0; // previous score
-		stateHist.clear(); // state history
-		actionHist.clear(); // action history
 	}
 
 	// run the client
@@ -144,15 +140,20 @@ public class MFECAgent implements Runnable {
 			GameState state = solve();
 			if (state == GameState.WON) {
 				
+				if(!newGame) this.learn();
+				rewardHist.clear(); // reward history
+				prevScore  = 0; // previous score
+				stateHist.clear(); // state history
+				actionHist.clear(); // action history
+				
 				//newGame일 때 레벨 별 스코어 저장
 				if(newGame){
 					int score = StateUtil.getScore(ActionRobot.proxy);
-					System.out.println("Current Level Score: "+score);
+					System.out.println("####################################");
+					System.out.println("Level " +currentLevel +" score: "+score);
+					System.out.println("####################################");
 					if(!scores.containsKey(currentLevel)) scores.put(currentLevel, score);
 					else if(scores.get(currentLevel) < score) scores.put(currentLevel, score);
-				}else{
-					//newGame 아니면 학습
-					this.learn();
 				}
 				
 				if(trainingFlag){
@@ -176,7 +177,12 @@ public class MFECAgent implements Runnable {
 				firstShot = true;
 				
 			} else if (state == GameState.LOST) {
-				this.learn();
+				if(!newGame) this.learn();
+				rewardHist.clear(); // reward history
+				prevScore  = 0; // previous score
+				stateHist.clear(); // state history
+				actionHist.clear(); // action history
+				
 				if(trainingFlag) {
 					//training일 때 실패하면 해당 레벨 다시 시도.
 					System.out.println("####### Training Failed - Restart this level #######");
@@ -229,13 +235,18 @@ public class MFECAgent implements Runnable {
 
 	public GameState solve()
 	{
+		if(stateHist.size() <1){
+			System.out.println("####################################");
+			System.out.println("Level "+currentLevel+ " begins");
+			System.out.println("####################################");
+		}
+		
 		// Capture the current screenshot and find the slingshots.
 		BufferedImage screenshot = ActionRobot.doScreenShot();
 		Vision vision = new Vision(screenshot);
 		Rectangle sling = vision.findSlingshotMBR();
 		while (sling == null && aRobot.getState() == GameState.PLAYING) {
-			System.out
-			.println("No slingshot detected. Please remove pop up or zoom out");
+			System.out.println("No slingshot detected. Please remove pop up or zoom out");
 			ActionRobot.fullyZoomOut();
 			screenshot = ActionRobot.doScreenShot();
 			vision = new Vision(screenshot);
@@ -403,6 +414,7 @@ public class MFECAgent implements Runnable {
 								numTimestamp++;
 								
 								state = aRobot.getState();
+								
 								if ( state == GameState.PLAYING ){
 									screenshot = ActionRobot.doScreenShot();
 									vision = new Vision(screenshot);
@@ -410,6 +422,7 @@ public class MFECAgent implements Runnable {
 									tp.adjustTrajectory(traj, sling, releasePoint);
 									firstShot = false;
 								}
+								
 							}
 						}
 						else
@@ -504,7 +517,7 @@ public class MFECAgent implements Runnable {
 	}
 	
 	public static double getAction(int state){
-		int n = 5;
+		int n = 3;
 		int maxReward = -1;
 		double bestAction = -1;
 		int[][] arrayState1 = hashToarrayStateDic.get(state); 
@@ -538,14 +551,15 @@ public class MFECAgent implements Runnable {
 			 
 			if (expectedReward > maxReward){
 				maxReward = expectedReward;
-				System.out.println("New best angle is " + action.toString() + "(E(reward): "+maxReward+")");
+				//System.out.println("New best angle is " + action.toString() + "(E(reward): "+maxReward+")");
 				bestAction = action;
 			}
 		}
 		
-		if(maxReward>0)
+		if(maxReward>0){
+			System.out.println("Best angle is " + bestAction + "(E(reward): "+maxReward+")");
 			return bestAction;
-		else{
+		}else{
 			System.out.println("No previous action available");
 			return -1;
 		}
