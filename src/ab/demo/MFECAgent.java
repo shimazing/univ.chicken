@@ -139,7 +139,6 @@ public class MFECAgent implements Runnable {
 		while (true) {
 			GameState state = solve();
 			if (state == GameState.WON) {
-				
 				if(!newGame) this.learn();
 				rewardHist.clear(); // reward history
 				prevScore  = 0; // previous score
@@ -152,8 +151,7 @@ public class MFECAgent implements Runnable {
 					System.out.println("####################################");
 					System.out.println("Level " +currentLevel +" score: "+score);
 					System.out.println("####################################");
-					if(!scores.containsKey(currentLevel)) scores.put(currentLevel, score);
-					else if(scores.get(currentLevel) < score) scores.put(currentLevel, score);
+					scores.put(currentLevel, score);
 				}
 				
 				if(trainingFlag){
@@ -212,12 +210,16 @@ public class MFECAgent implements Runnable {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						newGame = false;
+						//newGame = false;
+						scores.clear();
 					}
-					System.out.println("####### Test Failed - Restart this level #######");
-					trainingFlag = true;
+					//System.out.println("####### Test Failed - Restart this level #######");
+					System.out.println("####### Test Failed - Restart from the beginning #######");
+					//trainingFlag = true;
 				}
-				aRobot.restartLevel();
+				currentLevel = 1;
+				aRobot.loadLevel(currentLevel);				
+				//aRobot.restartLevel();
 			} else if (state == GameState.LEVEL_SELECTION) {
 				System.out.println("Unexpected level selection page, go to the last current level : "+ currentLevel);
 				aRobot.loadLevel(currentLevel);
@@ -422,7 +424,6 @@ public class MFECAgent implements Runnable {
 									tp.adjustTrajectory(traj, sling, releasePoint);
 									firstShot = false;
 								}
-								
 							}
 						}
 						else
@@ -483,7 +484,7 @@ public class MFECAgent implements Runnable {
             oos.writeObject(ADic_Ag);
             oos.close();
             fos.close();
-            System.out.printf("New max score Adic is saved");
+            System.out.println("New max score Adic is saved");
          }catch(IOException ioe){
                 ioe.printStackTrace();
          }
@@ -494,7 +495,7 @@ public class MFECAgent implements Runnable {
             oos.writeObject(hashToarrayStateDic);
             oos.close();
             fos.close();
-            System.out.printf("New max score str2arrayDic is saved");
+            System.out.println("New max score str2arrayDic is saved");
          }catch(IOException ioe){
                 ioe.printStackTrace();
          }
@@ -535,15 +536,17 @@ public class MFECAgent implements Runnable {
 					for (Integer actionState : SRDic.keySet()){
 						arrayState2 = hashToarrayStateDic.get(actionState);
 						double dist = getStateDist(arrayState1, arrayState2);
+						
 						SDistDic.put(actionState,dist);
 					}
-					
 					List<Integer> topNstates = getTopNStates(SDistDic, n);
 					 
 					//System.out.println();
+					//System.out.println("For action "+action);
 					int rewardSum =0;
 					for(Integer actionState : topNstates){
 						rewardSum += SRDic.get(actionState);
+						//System.out.println("Dist :"+SDistDic.get(actionState));
 					}
 					expectedReward = rewardSum/n;
 				}
