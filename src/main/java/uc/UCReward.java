@@ -4,25 +4,41 @@ package uc;
  * Created by keltp on 2017-06-01.
  */
 public class UCReward {
-    private double reward;
+    private double netReward;
+    private int netScore;
+
+    public double netReward() {
+        return netReward;
+    }
+
+    public int netScore() {
+        return netScore;
+    }
 
     public static class Builder {
         private UCReward previousReward;
-        private int currentScore;
 
-        public Builder previousReward (UCReward reward) {
-            previousReward = reward;
+        public Builder init() {
+            previousReward = null;
             return this;
         }
 
-        public Builder currentScore (int score) {
-            currentScore = score;
-            return this;
-        }
-
-        public UCReward build(int score) {
+        public UCReward build(int currentScore) {
             UCReward reward = new UCReward();
-            reward.reward = -10000 + (currentScore - previousReward.reward);
+            double netReward;
+            int netScore;
+
+            if(previousReward == null) {
+                netScore = currentScore;
+                netReward =  -10000 + netScore;
+            } else {
+                netScore = currentScore - previousReward.netScore;
+                netReward = -10000 + netScore;
+            }
+            reward.netReward = netReward;
+            reward.netScore = netScore;
+            previousReward = reward;
+
             return reward;
         }
     }

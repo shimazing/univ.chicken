@@ -76,7 +76,10 @@ public class VisionRealShape
      
         // find the slingshot and reference pivot
         findSling();
-      
+    }
+
+    public int findGroundLevel() {
+        return _ground;
     }
     
     // find the slingshot

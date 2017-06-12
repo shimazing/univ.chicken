@@ -437,6 +437,7 @@ public class VisionUtils {
 			int parabola[][], Color bgColour) {
 		Graphics2D g2d = canvas.createGraphics();
 		g2d.setColor(bgColour);
+
 		g2d.drawPolyline(parabola[0], parabola[1], parabola[0].length);
 		return canvas;
 	}

@@ -41,6 +41,19 @@ public class Poly extends Body
                 polygon.addPoint(start.x + left, start.y + top);
             }
         }
+
+        centerX = xs;
+        centerY = ys;
+        angle = 0;
+        area = getBounds().height * getBounds().width;
+        this.type = type;
+        super.setBounds(polygon.getBounds());
+    }
+
+    public Poly(Polygon poly, double xs, double ys, ABType type)
+    {
+        polygon = poly;
+        shape = ABShape.Poly;
         centerX = xs;
         centerY = ys;
         angle = 0;

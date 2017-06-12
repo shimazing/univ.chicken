@@ -9,8 +9,7 @@
 
 package ab.vision;
 
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -821,6 +820,26 @@ public class VisionMBR {
 		return objects;
 	}
 
+	public List<Point> findEstimatedTrajPoints() {
+		Rectangle sling = findSlingshotMBR();
+		List<Point> trajPoints = findTrajPoints();
+		Matrix W = fitParabola(trajPoints);
+		List<Point> estimatedPoints = new ArrayList<>();
+		int p[][] = new int[2][100];
+		int startx = (int) sling.getCenterX();
+		for (int i = 0; i < 100; i++) {
+			int x = startx;
+			int y = (int) (W.get(0, 0) * Math.pow(x, 2) + W.get(1, 0)
+					* x + W.get(2, 0));
+			estimatedPoints.add(new Point(x, y));
+			startx += 10;
+		}
+
+		if (W.get(0, 0) > 0) {
+			return estimatedPoints;
+		}
+		return null;
+	}
 
 
 	// find trajectory points

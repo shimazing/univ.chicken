@@ -37,10 +37,12 @@ public class Test {
 
     public Test() throws Exception {
         robot = new ActionRobot();
-        FileWriter writer = new FileWriter("d:/GoogleDrive/aibirds.csv", true);
+        FileWriter writer = new FileWriter("d:/desktop/aibirds/aibirds2.csv", true);
+
         writer.write("level,angle,try,refX,refY,relX,relY,width,height,x,y,nx,ny" + System.lineSeparator());
+
         TreeMap<Integer, Integer> map = new TreeMap<>();
-        map.put(1, 30);
+        map.put(1, 4);
         map.put(2, 4);
         map.put(3, 4);
         map.put(4, 4);
@@ -97,7 +99,7 @@ public class Test {
 
         for(int angle = from;angle <= 77;angle++) {
             int n = 0;
-            while(n < 3) {
+            while(n < 1) {
                 System.out.println(String.format("Try to %s-th shot with angle %s in level %s", (n+1), angle, level));
                 Rectangle sling = getSling();
                 double mag = sling.height * 10;
@@ -121,28 +123,41 @@ public class Test {
 
                     BufferedImage image = ActionRobot.doScreenShot();
                     Vision vision = new Vision(image);
-                    List<Point> trajs = vision.findTrajPoints();
+                    List<Point> trajs = vision.findEstimatedTrajPoints();
 
                     if(trajs == null) {
                         System.err.println("Failed to find trajectories.");
-                        ImageIO.write(image, "png", new File("d:/GoogleDrive/aibirds/" + String.format("fail-traj-%s-%s-%s.png", level, angle, (n+1))));
+                        ImageIO.write(image, "png", new File("d:/desktop/aibirds/" + String.format("fail-traj-%s-%s-%s.png", level, angle, (n+1))));
                     } else {
                         System.out.println("Found trajectories.");
                         List<Point> clean = new ArrayList<>();
 
-                        double prevX = 0;
+                        double prevX = -1;
 
                         for(Point traj : trajs) {
                             double curX = traj.getX();
                             double curY = traj.getY();
-                            if (curX >= rel.getX() && curX >= prevX) {
-                                clean.add(new Point((int) curX, (int) curY));
-                                prevX = curX;
+                            if(curX >= rel.getX()) {
+                                if(clean.size() == 0) {
+                                    clean.add(new Point((int) curX, (int) curY));
+                                    prevX = curX;
+                                } else {
+                                    double dx = curX - prevX;
+                                    if(dx >= 0 && dx < 100) {
+                                        clean.add(new Point((int) curX, (int) curY));
+                                        prevX = curX;
+                                    }
+                                }
                             }
                         }
 
-                        if(clean.size() > 10) {
-                            System.out.println("Trajectories are well-founded.");
+                        if(clean.size() > 5) {
+                            System.out.print("Trajectories are well-founded: ");
+                            for(Point p : clean) {
+                                System.out.print(String.format("(%s, %s) ", p.getX(), p.getY()));
+                            }
+                            System.out.println();
+
                             for(Point p : clean) {
                                 String line = String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s",
                                         level, angle, (n+1),
@@ -154,9 +169,12 @@ public class Test {
                             }
                             n++;
                         } else {
-                            ImageIO.write(image, "png", new File("d:/GoogleDrive/aibirds/" + String.format("not-well-traj-%s-%s-%s.png", level, angle, (n+1))));
-                            System.err.println("Trajectories are not well-founded. Retry it");
-
+                            ImageIO.write(image, "png", new File("d:/desktop//aibirds/" + String.format("not-well-traj-%s-%s-%s.png", level, angle, (n+1))));
+                            System.err.print("Trajectories are not well-founded. Retry it: ");
+                            for(Point p : clean) {
+                                System.err.print(String.format("(%s, %s) ", p.getX(), p.getY()));
+                            }
+                            System.err.println();
                         }
                     }
                 }

@@ -8,8 +8,7 @@
  *****************************************************************************/
 package ab.vision;
 
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
@@ -87,9 +86,20 @@ public class Vision {
 		}
 		
 		return visionRealShape.findHills();
-	} 
-	
-	
+	}
+
+	public int findGroundLevel()
+	{
+		if(visionRealShape == null)
+		{
+			visionRealShape = new VisionRealShape(image);
+		}
+
+		return visionRealShape.findGroundLevel();
+	}
+
+
+
 	public Rectangle findSlingshotMBR()
 	{
 		if (visionMBR == null)
@@ -105,6 +115,13 @@ public class Vision {
 			visionMBR = new VisionMBR(image);
 		}
 		return visionMBR.findTrajPoints();
+	}
+
+	public List<Point> findEstimatedTrajPoints() {
+		if(visionMBR == null) {
+			visionMBR = new VisionMBR(image);
+		}
+		return visionMBR.findEstimatedTrajPoints();
 	}
 	/**
 	 * @return a list of real shapes (represented by Body.java) of the blocks in the screenshot. Blocks: Stone, Wood, Ice 

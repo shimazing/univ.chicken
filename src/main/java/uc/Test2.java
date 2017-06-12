@@ -1,31 +1,26 @@
 package uc;
 
-import ab.demo.other.ActionRobot;
-import ab.vision.ABObject;
-import ab.vision.GameStateExtractor;
 import ab.vision.Vision;
-import ab.vision.VisionUtils;
-import ab.vision.real.shape.Circle;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
-import uc.distance.DistanceFunction;
-import uc.distance.EuclideanDistance;
-import uc.distance.HammingDistance;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by keltp on 2017-06-07.
  */
 public class Test2 {
-    public static void main(String args[]) throws IOException {
-        UCLog.i("INFO");
-        UCLog.w("WARNING");
-        UCLog.e("ERROR");
-        UCLog.e("Error Find", new Exception("ASDF"));
+    public static void main(String args[]) throws Exception {
+        UCConfiguration conf = new UCConfiguration.Builder().nStepsPerEpoch(100).build();
+        UCAgent agent = new UCAgent(conf);
+        File dir = new File("./autosave");
+        dir.mkdirs();
+        agent.serialize(dir, "conf.json", "qec.json", "stats.json");
+        UCAgent agent2 = UCAgent.deserialize(dir, "conf.json", "qec.json", "stats.json");
+        agent2.serialize(dir, "conf2.json", "qec2.json", "stats2.json");
     }
 }

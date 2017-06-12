@@ -1,18 +1,18 @@
 package uc;
 
-import ab.demo.other.LoadLevelSchema;
-import ab.demo.other.RestartLevelSchema;
-import ab.demo.other.ShootingSchema;
-import ab.demo.other.Shot;
+import ab.demo.other.*;
 import ab.server.Proxy;
 import ab.server.proxy.message.ProxyClickMessage;
 import ab.server.proxy.message.ProxyMouseWheelMessage;
 import ab.server.proxy.message.ProxyScreenshotMessage;
 import ab.vision.ABObject;
 import ab.vision.GameStateExtractor;
+import ab.vision.Vision;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import sun.management.snmp.jvminstr.JvmThreadInstanceEntryImpl;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -29,9 +29,8 @@ public class UCActionRobot {
     private ShootingSchema shootingSchema;
     private GameStateExtractor stateExtractor;
 
-
-    public UCActionRobot() {
-        if(proxy == null) {
+    public void connect() {
+        if (proxy == null) {
             try {
                 proxy = new Proxy(9000) {
                     @Override
@@ -66,13 +65,14 @@ public class UCActionRobot {
     }
 
     public void loadLevel(int i) throws Exception {
-        if(i < 1 || i > 21) {
+        if (i < 1 || i > 21) {
             throw new Exception("Playable level is from 1 to 21.");
         }
         loadLevelSchema.loadLevel(i);
     }
 
     public BufferedImage doScreenShot() {
+        fullyZoomOut();
         byte[] imageBytes = proxy.send(new ProxyScreenshotMessage());
         BufferedImage image = null;
         try {
@@ -84,7 +84,7 @@ public class UCActionRobot {
     }
 
     public void fullyZoomIn() {
-        for(int i = 0;i < 15;i++) {
+        for (int i = 0; i < 15; i++) {
             proxy.send(new ProxyMouseWheelMessage(1));
         }
 
@@ -96,7 +96,7 @@ public class UCActionRobot {
     }
 
     public void fullyZoomOut() {
-        for(int i = 0;i < 15;i++) {
+        for (int i = 0; i < 15; i++) {
             proxy.send(new ProxyMouseWheelMessage(-1));
         }
 
@@ -107,9 +107,8 @@ public class UCActionRobot {
         }
     }
 
-    public GameStateExtractor.GameState getGameState() {
-        BufferedImage image = doScreenShot();
-        if(image != null) {
+    public GameStateExtractor.GameState getGameState(BufferedImage image) {
+        if (image != null) {
             return stateExtractor.getGameState(image);
         } else {
             return GameStateExtractor.GameState.UNKNOWN;
@@ -117,7 +116,7 @@ public class UCActionRobot {
     }
 
     public void goFromMainMenuToLevelSelection() {
-        while (getGameState() == GameStateExtractor.GameState.MAIN_MENU) {
+        while (getGameState(doScreenShot()) == GameStateExtractor.GameState.MAIN_MENU) {
             UCLog.i("Go to the Episode menu.");
             proxy.send(new ProxyClickMessage(305, 277));
             try {
@@ -127,7 +126,7 @@ public class UCActionRobot {
             }
         }
 
-        while (getGameState() == GameStateExtractor.GameState.EPISODE_MENU) {
+        while (getGameState(doScreenShot()) == GameStateExtractor.GameState.EPISODE_MENU) {
             UCLog.i("Select the Poached Eggs episode.");
             proxy.send(new ProxyClickMessage(150, 300));
             try {
@@ -150,6 +149,70 @@ public class UCActionRobot {
         }
     }
 
+    public Rectangle getSling() {
+        BufferedImage image = null;
+        Rectangle sling = null;
 
+        while (sling == null && getGameState(image) == GameStateExtractor.GameState.PLAYING) {
+            ActionRobot.fullyZoomOut();
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException e) {
+                UCLog.e(e.getMessage(), e);
+            }
+            image = doScreenShot();
+            Vision vision = new Vision(image);
+            sling = vision.findSlingshotMBR();
+        }
 
+        return sling;
+    }
+
+    public static boolean isSameScale(Rectangle sling1, Rectangle sling2) {
+        if (sling1 == null || sling2 == null) {
+            return false;
+        }
+
+        double dw = sling1.width - sling2.width;
+        double dh = sling1.height - sling2.height;
+        double diff = dw * dw + dh * dh;
+
+        return diff < 25;
+    }
+
+    public int getScoreInGame() {
+        BufferedImage image;
+        int score = -1;
+        int prevScore = -1;
+        while ((image = doScreenShot()) != null &&
+                stateExtractor.getGameState(image) == GameStateExtractor.GameState.PLAYING &&
+                prevScore != (score = stateExtractor.getScoreInGame(image))) {
+            prevScore = score;
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                UCLog.e(e.getMessage(), e);
+            }
+        }
+        return score;
+    }
+
+    public int getScoreEndGame() {
+        BufferedImage image;
+        int score = -1;
+        int prevScore = -1;
+        while ((image = doScreenShot()) != null &&
+                stateExtractor.getGameState(image) == GameStateExtractor.GameState.WON &&
+                prevScore != (score = stateExtractor.getScoreInGame(image))) {
+            prevScore = score;
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                UCLog.e(e.getMessage(), e);
+            }
+        }
+        return score;
+    }
 }

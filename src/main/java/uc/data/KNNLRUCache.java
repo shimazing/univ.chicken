@@ -1,14 +1,18 @@
 package uc.data;
 
+import com.google.gson.Gson;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.deeplearning4j.berkeley.Pair;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.api.ops.impl.accum.EqualsWithEps;
 import org.nd4j.linalg.api.ops.impl.indexaccum.IMin;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 import uc.balltree.BallTree;
 import uc.distance.DistanceFunction;
 
 import javax.print.attribute.standard.MediaSize;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -17,23 +21,49 @@ import java.util.List;
 public class KNNLRUCache {
     private final int maxCapacity;
     private DistanceFunction<Integer, Double> distFunc;
-    private int curCapacity;
-    private INDArray states;
-    private INDArray qValues;
-    private INDArray lruValues;
-    private double timer;
-    private BallTree tree;
     private int k;
 
-    public KNNLRUCache(int maxCapacity, int dimension, int k, DistanceFunction<Integer, Double> distFunc) {
+    private BallTree tree;
+
+    protected INDArray states;
+    protected INDArray qValues;
+    protected INDArray lruValues;
+    protected double timer;
+    protected int curCapacity;
+
+    protected KNNLRUCache(int maxCapacity, int dimension, int k, DistanceFunction<Integer, Double> distFunc, double initQValue) throws Exception {
+        this(maxCapacity, dimension, k, distFunc, initQValue, null, null, null, 0.0, 0);
+    }
+
+    protected KNNLRUCache(int maxCapacity, int dimension, int k, DistanceFunction<Integer, Double> distFunc, double initQValue,
+                       INDArray states, INDArray qValues, INDArray lruValues, double timer, int curCapacity) throws Exception {
         this.maxCapacity = maxCapacity;
         this.k = k;
         this.distFunc = distFunc;
-        states = Nd4j.create(maxCapacity, dimension);
-        qValues = Nd4j.create(maxCapacity);
-        lruValues = Nd4j.create(maxCapacity);
-        timer = 0.0;
-        curCapacity = 0;
+
+        if(states == null) {
+            this.states = Nd4j.create(maxCapacity, dimension);
+        } else {
+            this.states = states;
+        }
+
+        if(qValues == null) {
+            this.qValues = Nd4j.zeros(maxCapacity).addi(initQValue);
+        } else {
+            this.qValues = qValues;
+        }
+
+        if(lruValues == null) {
+            this.lruValues = Nd4j.zeros(maxCapacity);
+        } else {
+            this.lruValues = lruValues;
+        }
+        this.timer = timer;
+        this.curCapacity = curCapacity;
+
+        if(this.curCapacity > 0) {
+            this.tree = BallTree.buildTree(distFunc, this.states);
+        }
     }
 
     private int find(INDArray state) throws Exception {

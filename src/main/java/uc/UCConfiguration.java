@@ -18,12 +18,13 @@ public class UCConfiguration {
      */
     private int screenWidth;
     private int screenHeight;
-    private int observationXOffset;
-    private int observationYOffset;
-    private int observationWidth;
-    private int observationHeight;
-    private int observationBirdWidth;
-    private int observationBirdHeight;
+    private int observationImageXOffset;
+    private int observationImageWidth;
+    private int observationImageHeight;
+    private int observationImageBirdWidth;
+    private int observationImageBirdHeight;
+    private int observationMatrixColumns;
+    private int observationMatrixRows;
     private int observationDimension;
 
     /**
@@ -32,7 +33,6 @@ public class UCConfiguration {
     private int stateDimension;
     private transient INDArray randomProjection;
     private int maxStateCapacity;
-    private int maxStateCapacityPerAction;
 
     /**
      * Actions
@@ -44,6 +44,8 @@ public class UCConfiguration {
     private double maxPercentileTapTime;
     private int nTapTimes;
     private int nActions;
+    private double initialQValue;
+
 
     /**
      * Parameter
@@ -73,28 +75,37 @@ public class UCConfiguration {
         return screenHeight;
     }
 
-    public int observationXOffset() {
-        return observationXOffset;
+    public int observationImageXOffset() {
+        return observationImageXOffset;
     }
 
-    public int observationYOffset() {
-        return observationYOffset;
+    public int observationMatrixColumns() {
+        return observationMatrixColumns;
     }
 
-    public int observationWidth() {
-        return observationWidth;
+    public int observationMatrixRows() {
+        return observationMatrixRows;
     }
 
-    public int observationHeight() {
-        return observationHeight;
+
+    public double initialQValue() {
+        return initialQValue;
     }
 
-    public int observationBirdWidth() {
-        return observationBirdWidth;
+    public int observationImageWidth() {
+        return observationImageWidth;
     }
 
-    public int observationBirdHeight() {
-        return observationBirdHeight;
+    public int observationImageHeight() {
+        return observationImageHeight;
+    }
+
+    public int observationImageBirdWidth() {
+        return observationImageBirdWidth;
+    }
+
+    public int observationImageBirdHeight() {
+        return observationImageBirdHeight;
     }
 
     public int observationDimension() {
@@ -111,10 +122,6 @@ public class UCConfiguration {
 
     public int maxStateCapacity() {
         return maxStateCapacity;
-    }
-
-    public int maxStateCapacityPerAction() {
-        return maxStateCapacityPerAction;
     }
 
     public int minAngle() {
@@ -184,9 +191,10 @@ public class UCConfiguration {
     public double epsilonRate() {
         return epsilonRate;
     }
+
     private UCConfiguration() {}
 
-    public void serializeToJson(File file) throws IOException {
+    public void serialize(File file) throws IOException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         FileWriter writer = new FileWriter(file, false);
         gson.toJson(this, writer);
@@ -194,12 +202,19 @@ public class UCConfiguration {
         writer.close();
     }
 
+    public String toString() {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        return gson.toJson(this);
+    }
+
     public static UCConfiguration deserializeFromJson(File file) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        UCConfiguration conf = gson.fromJson(new BufferedReader(new FileReader(file)), UCConfiguration.class);
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        UCConfiguration conf = gson.fromJson(reader, UCConfiguration.class);
         Class<?> clazz = Class.forName(conf.classNameDistanceFunction);
         conf.distFunc = (DistanceFunction<Integer, Double>) clazz.newInstance();
-        conf.randomProjection = Nd4j.randn(conf.observationDimension, conf.stateDimension, conf.seed);
+        conf.randomProjection = Nd4j.randn(conf.observationDimension(), conf.stateDimension(), conf.seed());
+        reader.close();
         return conf;
     }
 
@@ -209,17 +224,19 @@ public class UCConfiguration {
          */
         private int screenWidth = 840;
         private int screenHeight = 480;
-        private int observationXOffset = 435;
-        private int observationYOffset = 180;
-        private int observationWidth = 365;
-        private int observationHeight = 205;
-        private int observationBirdWidth = 15;
-        private int observationBirdHeight = 15;
+        private int observationImageXOffset = 435;
+        private int observationImageWidth = 365;
+        private int observationImageHeight = 205;
+        private int observationImageBirdWidth = 16;
+        private int observationImageBirdHeight = 16;
+        private int observationMatrixColumns = 84;
 
+
+        private int observationMatrixRows = 84;
         /**
          * State
          */
-        private int stateDimension = 128;
+        private int stateDimension = 64;
         private int maxStateCapacity = 10000000;
 
         /**
@@ -231,6 +248,7 @@ public class UCConfiguration {
         private double minPercentileTapTime = 0.5;
         private double maxPercentileTapTime = 0.95;
         private int nTapTimes = 10;
+        private double initialQValue = Double.NEGATIVE_INFINITY;
 
         /**
          * Parameter
@@ -249,6 +267,17 @@ public class UCConfiguration {
          */
         private DistanceFunction<Integer, Double> distFunc = new HammingDistance();
 
+
+        public Builder observationMatrixColumns(int observationMatrixColumns) {
+            this.observationMatrixColumns = observationMatrixColumns;
+            return this;
+        }
+
+        public Builder observationMatrixRows(int observationMatrixRows) {
+            this.observationMatrixRows = observationMatrixRows;
+            return this;
+        }
+
         public Builder screenWidth(int screenWidth) {
             this.screenWidth = screenWidth;
             return this;
@@ -259,33 +288,29 @@ public class UCConfiguration {
             return this;
         }
 
-        public Builder observationXOffset(int observationXOffset) {
-            this.observationXOffset = observationXOffset;
+        public Builder observationImageXOffset(int observationXOffset) {
+            this.observationImageXOffset = observationXOffset;
             return this;
         }
 
-        public Builder observationYOffset(int observationYOffset) {
-            this.observationYOffset = observationYOffset;
+
+        public Builder observationImageWidth(int observationWidth) {
+            this.observationImageWidth = observationWidth;
             return this;
         }
 
-        public Builder observationWidth(int observationWidth) {
-            this.observationWidth = observationWidth;
+        public Builder observationImageHeight(int observationHeight) {
+            this.observationImageHeight = observationHeight;
             return this;
         }
 
-        public Builder observationHeight(int observationHeight) {
-            this.observationHeight = observationHeight;
+        public Builder observationImageBirdWidth(int observationBirdWidth) {
+            this.observationImageBirdWidth = observationBirdWidth;
             return this;
         }
 
-        public Builder observationBirdWidth(int observationBirdWidth) {
-            this.observationBirdWidth = observationBirdWidth;
-            return this;
-        }
-
-        public Builder observationBirdHeight(int observationBirdHeight) {
-            this.observationBirdHeight = observationBirdHeight;
+        public Builder observationImageBirdHeight(int observationBirdHeight) {
+            this.observationImageBirdHeight = observationBirdHeight;
             return this;
         }
 
@@ -377,15 +402,17 @@ public class UCConfiguration {
         public UCConfiguration build() {
             UCConfiguration conf = new UCConfiguration();
 
+            conf.initialQValue = this.initialQValue;
             conf.screenWidth = this.screenWidth;
             conf.screenHeight = this.screenHeight;
-            conf.observationXOffset = this.observationXOffset;
-            conf.observationYOffset = this.observationYOffset;
-            conf.observationWidth = this.observationWidth;
-            conf.observationHeight = this.observationHeight;
-            conf.observationBirdWidth = this.observationBirdWidth;
-            conf.observationBirdHeight = this.observationBirdHeight;
-            conf.observationDimension = this.observationWidth * this.observationHeight;
+            conf.observationImageXOffset = this.observationImageXOffset;
+            conf.observationMatrixColumns = this.observationMatrixColumns;
+            conf.observationMatrixRows = this.observationMatrixRows;
+            conf.observationImageWidth = this.observationImageWidth;
+            conf.observationImageHeight = this.observationImageHeight;
+            conf.observationImageBirdWidth = this.observationImageBirdWidth;
+            conf.observationImageBirdHeight = this.observationImageBirdHeight;
+            conf.observationDimension = this.observationMatrixRows * this.observationMatrixColumns;
             conf.stateDimension = this.stateDimension;
             conf.randomProjection = Nd4j.randn(conf.observationDimension, conf.stateDimension, this.seed);
             conf.maxStateCapacity = this.maxStateCapacity;
@@ -397,7 +424,6 @@ public class UCConfiguration {
             conf.maxPercentileTapTime = this.maxPercentileTapTime;
             conf.nTapTimes = this.nTapTimes;
             conf.nActions = this.nAngles * this.nTapTimes;
-            conf.maxStateCapacityPerAction = this.maxStateCapacity / (conf.nActions);
 
             conf.epsilonStart = this.epsilonStart;
             conf.epsilonMin = this.epsilonMin;
