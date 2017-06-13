@@ -38,7 +38,6 @@ public class BallTree {
     }
 
     public void buildTree() throws Exception {
-
         if(data == null) {
             throw new Exception("No data is supplied.");
         }

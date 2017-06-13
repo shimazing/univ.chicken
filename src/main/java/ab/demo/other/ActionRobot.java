@@ -41,7 +41,7 @@ public class ActionRobot {
 	public int current_score = 0;
 	private LoadLevelSchema lls;
 	private RestartLevelSchema rls;
-	static {
+	/*static {
 		if (proxy == null) {
 			try {
 				proxy = new Proxy(9000) {
@@ -68,7 +68,7 @@ public class ActionRobot {
 				e.printStackTrace();
 			}
 		}
-	}
+	}*/
 
 	// A java util class for the standalone version. It provides common
 	// functions an agent would use. E.g. get the screenshot

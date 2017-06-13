@@ -31,18 +31,18 @@ public class KNNLRUCache {
     protected double timer;
     protected int curCapacity;
 
-    protected KNNLRUCache(int maxCapacity, int dimension, int k, DistanceFunction<Integer, Double> distFunc, double initQValue) throws Exception {
-        this(maxCapacity, dimension, k, distFunc, initQValue, null, null, null, 0.0, 0);
+    protected KNNLRUCache(int maxCapacity, int k, DistanceFunction<Integer, Double> distFunc, double initQValue) throws Exception {
+        this(maxCapacity, k, distFunc, initQValue, null, null, null, 0.0, 0);
     }
 
-    protected KNNLRUCache(int maxCapacity, int dimension, int k, DistanceFunction<Integer, Double> distFunc, double initQValue,
+    protected KNNLRUCache(int maxCapacity, int k, DistanceFunction<Integer, Double> distFunc, double initQValue,
                        INDArray states, INDArray qValues, INDArray lruValues, double timer, int curCapacity) throws Exception {
         this.maxCapacity = maxCapacity;
         this.k = k;
         this.distFunc = distFunc;
 
         if(states == null) {
-            this.states = Nd4j.create(maxCapacity, dimension);
+            this.states = null;
         } else {
             this.states = states;
         }
@@ -129,7 +129,11 @@ public class KNNLRUCache {
         }
 
         if(index > -1) {
-            states.put(index, state);
+            if(states == null || states.rows() == 0) {
+                states = state;
+            } else {
+                states = Nd4j.vstack(states, state);
+            }
             qValues.putScalar(index, reward);
             lruValues.putScalar(index, timer);
             timer += 0.01;

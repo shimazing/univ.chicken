@@ -5,6 +5,7 @@ package uc;
  */
 public class UCReward {
     private double netReward;
+    private int currentScore;
     private int netScore;
 
     public double netReward() {
@@ -27,14 +28,16 @@ public class UCReward {
             UCReward reward = new UCReward();
             double netReward;
             int netScore;
+            int curScore = currentScore;
 
             if(previousReward == null) {
                 netScore = currentScore;
                 netReward =  -10000 + netScore;
             } else {
-                netScore = currentScore - previousReward.netScore;
+                netScore = Math.max(currentScore - previousReward.currentScore, 0);
                 netReward = -10000 + netScore;
             }
+            reward.currentScore = currentScore;
             reward.netReward = netReward;
             reward.netScore = netScore;
             previousReward = reward;

@@ -62,6 +62,26 @@ public class UCObservation {
         return image;
     }
 
+    public INDArray observationMatrix() {
+        return observationMatrix;
+    }
+
+    public double pixelPerScaleX() {
+        return pixelPerScaleX;
+    }
+
+    public double pixelPerScaleY() {
+        return pixelPerScaleY;
+    }
+
+    public double xOffset() {
+        return xOffset;
+    }
+
+    public double yOffset() {
+        return yOffset;
+    }
+
     public static class Builder {
         private int observationImageXOffset;
         private int observationImageWidth;
@@ -74,8 +94,8 @@ public class UCObservation {
             observationImageXOffset = conf.observationImageXOffset();
             observationImageWidth = conf.observationImageWidth();
             observationImageHeight = conf.observationImageHeight();
-            observationMatrixColumns = conf.observationMatrixColumns();
-            observationMatrixRows = conf.observationMatrixRows();
+            observationMatrixColumns = conf.observationPreprocessedWidth();
+            observationMatrixRows = conf.observationPreprocessedHeight();
             randomProjection = conf.randomProjection();
         }
 
@@ -116,7 +136,7 @@ public class UCObservation {
 
                         if(contains) {
                             int[] rgb = toRGB(object.type);
-                            double value = rgbToNormalizedGreyScale(rgb[0], rgb[1], rgb[2]);
+                            double value = UCVisionUtils.rgbToNormalizedGreyScale(rgb[0], rgb[1], rgb[2]);
                             obs.observationMatrix.putScalar(ny, nx, value);
                         }
                     }
@@ -153,7 +173,7 @@ public class UCObservation {
                 for(int nx = 0; nx < 6; nx++) {
                     for(int ny = 0; ny < 6; ny++) {
                         int[] rgb = toRGB(bird.getType());
-                        double v = rgbToNormalizedGreyScale(rgb[0], rgb[1], rgb[2]);
+                        double v = UCVisionUtils.rgbToNormalizedGreyScale(rgb[0], rgb[1], rgb[2]);
                         obs.observationMatrix.putScalar(ny, i * 10 + nx, v);
                     }
                 }
@@ -162,9 +182,6 @@ public class UCObservation {
             return obs;
         }
 
-        private double rgbToNormalizedGreyScale(int r, int g, int b) {
-            return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        }
 
         private int[] toRGB(ABType type) {
             switch (type) {

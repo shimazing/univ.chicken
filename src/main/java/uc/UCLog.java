@@ -34,27 +34,17 @@ public class UCLog {
                     cal.setTimeInMillis(record.getMillis());
                     Throwable t = record.getThrown();
                     if(t == null) {
-                        return String.format("[%s] %s - %s\r\n", lFormat.format(cal.getTime()), record.getLevel().getName(), record.getMessage());
+                        return String.format("[%s/%s] %s\r\n", lFormat.format(cal.getTime()), record.getLevel().getName(), record.getMessage());
                     } else {
                         String trace = ExceptionUtils.getStackTrace(t);
-                        return String.format("[%s] %s - %s\r\n%s", lFormat.format(cal.getTime()), record.getLevel().getName(), record.getMessage(), trace);
+                        return String.format("[%s/%s] %s\r\n%s", lFormat.format(cal.getTime()), record.getLevel().getName(), record.getMessage(), trace);
                     }
                 }
             };
-            StreamHandler sHandler = new StreamHandler(System.out, formatter);
-            sHandler.setFilter(new Filter() {
-                @Override
-                public boolean isLoggable(LogRecord record) {
-                    return record.getLevel() == Level.INFO;
-                }
-            });
-            StreamHandler eHandler = new StreamHandler(System.err, formatter);
-            eHandler.setFilter(new Filter() {
-                @Override
-                public boolean isLoggable(LogRecord record) {
-                    return record.getLevel() != Level.INFO;
-                }
-            });
+
+            ConsoleHandler cHandler = new ConsoleHandler();
+            cHandler.setFormatter(formatter);
+
             FileHandler fHandler = new FileHandler(logDir.getCanonicalPath() + File.separator + fn, true);
             fHandler.setFormatter(formatter);
 
@@ -62,8 +52,7 @@ public class UCLog {
             logger.setLevel(Level.ALL);
             logger.setUseParentHandlers(false);
             logger.addHandler(fHandler);
-            logger.addHandler(sHandler);
-            logger.addHandler(eHandler);
+            logger.addHandler(cHandler);
         } catch (IOException e) {
             e.printStackTrace();
         }

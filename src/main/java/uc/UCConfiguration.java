@@ -21,10 +21,8 @@ public class UCConfiguration {
     private int observationImageXOffset;
     private int observationImageWidth;
     private int observationImageHeight;
-    private int observationImageBirdWidth;
-    private int observationImageBirdHeight;
-    private int observationMatrixColumns;
-    private int observationMatrixRows;
+    private int observationPreprocessedWidth;
+    private int observationPreprocessedHeight;
     private int observationDimension;
 
     /**
@@ -79,12 +77,12 @@ public class UCConfiguration {
         return observationImageXOffset;
     }
 
-    public int observationMatrixColumns() {
-        return observationMatrixColumns;
+    public int observationPreprocessedWidth() {
+        return observationPreprocessedWidth;
     }
 
-    public int observationMatrixRows() {
-        return observationMatrixRows;
+    public int observationPreprocessedHeight() {
+        return observationPreprocessedHeight;
     }
 
 
@@ -100,13 +98,6 @@ public class UCConfiguration {
         return observationImageHeight;
     }
 
-    public int observationImageBirdWidth() {
-        return observationImageBirdWidth;
-    }
-
-    public int observationImageBirdHeight() {
-        return observationImageBirdHeight;
-    }
 
     public int observationDimension() {
         return observationDimension;
@@ -188,6 +179,7 @@ public class UCConfiguration {
         return distFunc;
     }
 
+
     public double epsilonRate() {
         return epsilonRate;
     }
@@ -195,7 +187,7 @@ public class UCConfiguration {
     private UCConfiguration() {}
 
     public void serialize(File file) throws IOException {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
         FileWriter writer = new FileWriter(file, false);
         gson.toJson(this, writer);
         writer.flush();
@@ -203,12 +195,12 @@ public class UCConfiguration {
     }
 
     public String toString() {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
         return gson.toJson(this);
     }
 
     public static UCConfiguration deserializeFromJson(File file) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
         BufferedReader reader = new BufferedReader(new FileReader(file));
         UCConfiguration conf = gson.fromJson(reader, UCConfiguration.class);
         Class<?> clazz = Class.forName(conf.classNameDistanceFunction);
@@ -227,40 +219,36 @@ public class UCConfiguration {
         private int observationImageXOffset = 435;
         private int observationImageWidth = 365;
         private int observationImageHeight = 205;
-        private int observationImageBirdWidth = 16;
-        private int observationImageBirdHeight = 16;
         private int observationMatrixColumns = 84;
-
-
         private int observationMatrixRows = 84;
         /**
          * State
          */
         private int stateDimension = 64;
-        private int maxStateCapacity = 10000000;
+        private int maxStateCapacity = 100000;
 
         /**
          * Actions
          */
-        private int minAngle = 4;
-        private int maxAngle = 83;
-        private int nAngles = 30;
+        private int minAngle = 8;
+        private int maxAngle = 77;
+        private int nAngles = 35;
         private double minPercentileTapTime = 0.5;
         private double maxPercentileTapTime = 0.95;
         private int nTapTimes = 10;
-        private double initialQValue = Double.NEGATIVE_INFINITY;
+        private double initialQValue = -10000;
 
         /**
          * Parameter
          */
         private double epsilonStart = 1.0;
         private double epsilonMin = 0.005;
-        private double nStepsForEpsilonDecay = 10000;
+        private double nStepsForEpsilonDecay = 5000;
         private double discountFactor = 0.99;
         private int nEpochs = 1000;
-        private int nStepsPerEpoch = 1000;
+        private int nStepsPerEpoch = 100;
         private long seed = 12345;
-        private int kNearestNeighbor = 20;
+        private int kNearestNeighbor = 11;
 
         /**
          * Distance function
@@ -268,12 +256,12 @@ public class UCConfiguration {
         private DistanceFunction<Integer, Double> distFunc = new HammingDistance();
 
 
-        public Builder observationMatrixColumns(int observationMatrixColumns) {
+        public Builder observationPreprocessedWidth(int observationMatrixColumns) {
             this.observationMatrixColumns = observationMatrixColumns;
             return this;
         }
 
-        public Builder observationMatrixRows(int observationMatrixRows) {
+        public Builder observationPreprocessedHeight(int observationMatrixRows) {
             this.observationMatrixRows = observationMatrixRows;
             return this;
         }
@@ -301,16 +289,6 @@ public class UCConfiguration {
 
         public Builder observationImageHeight(int observationHeight) {
             this.observationImageHeight = observationHeight;
-            return this;
-        }
-
-        public Builder observationImageBirdWidth(int observationBirdWidth) {
-            this.observationImageBirdWidth = observationBirdWidth;
-            return this;
-        }
-
-        public Builder observationImageBirdHeight(int observationBirdHeight) {
-            this.observationImageBirdHeight = observationBirdHeight;
             return this;
         }
 
@@ -399,6 +377,11 @@ public class UCConfiguration {
             return this;
         }
 
+        public Builder initialQValue(double initialQValue) {
+            this.initialQValue = initialQValue;
+            return this;
+        }
+
         public UCConfiguration build() {
             UCConfiguration conf = new UCConfiguration();
 
@@ -406,12 +389,10 @@ public class UCConfiguration {
             conf.screenWidth = this.screenWidth;
             conf.screenHeight = this.screenHeight;
             conf.observationImageXOffset = this.observationImageXOffset;
-            conf.observationMatrixColumns = this.observationMatrixColumns;
-            conf.observationMatrixRows = this.observationMatrixRows;
+            conf.observationPreprocessedWidth = this.observationMatrixColumns;
+            conf.observationPreprocessedHeight = this.observationMatrixRows;
             conf.observationImageWidth = this.observationImageWidth;
             conf.observationImageHeight = this.observationImageHeight;
-            conf.observationImageBirdWidth = this.observationImageBirdWidth;
-            conf.observationImageBirdHeight = this.observationImageBirdHeight;
             conf.observationDimension = this.observationMatrixRows * this.observationMatrixColumns;
             conf.stateDimension = this.stateDimension;
             conf.randomProjection = Nd4j.randn(conf.observationDimension, conf.stateDimension, this.seed);

@@ -1,10 +1,11 @@
 package uc;
 
+import ab.demo.other.Shot;
 import ab.vision.*;
 import org.nd4j.linalg.api.ndarray.INDArray;
-import org.nd4j.linalg.factory.Nd4j;
 import uc.data.QecTable;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -33,14 +34,18 @@ public class UCAgent implements Runnable {
     private Random random = new Random(System.currentTimeMillis());
 
     private double rewardsPerEpsiode;
-    private int scoresPerEpsiode;
     private int stepsPerEpisode;
     private long timePerEpisode;
     private boolean isTraining = true;
     private int prevEpoch;
 
+    private final File saveDir = new File("./autosave");
+    private final File imgDir = new File("./imgs");
+
     public UCAgent(UCConfiguration conf, QecTable table, UCStatistics stat) throws Exception {
         robot = new UCActionRobot();
+        saveDir.mkdirs();
+        imgDir.mkdirs();
 
         if(conf == null) {
             configuration = new UCConfiguration.Builder().build();
@@ -107,6 +112,7 @@ public class UCAgent implements Runnable {
     @Override
     public void run() {
         robot.connect();
+        UCLog.i("UCAgent started with this configuration: \r\n" + configuration.toString());
         try {
             robot.loadLevel(curLevel);
         } catch (Exception e) {
@@ -143,6 +149,7 @@ public class UCAgent implements Runnable {
                 case MAIN_MENU:
                     UCLog.w("Unexpected main menu page. Go th the lastly played level.");
                     try {
+                        robot.goFromMainMenuToLevelSelection();
                         robot.loadLevel(curLevel);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -151,6 +158,7 @@ public class UCAgent implements Runnable {
                 case EPISODE_MENU:
                     UCLog.w("Unexpected main menu page. Go th the lastly played level.");
                     try {
+                        robot.goFromMainMenuToLevelSelection();
                         robot.loadLevel(curLevel);
                     } catch (Exception e) {
                         UCLog.e(e.getMessage(), e);
@@ -168,26 +176,22 @@ public class UCAgent implements Runnable {
                     }
                     break;
                 case WON:
+                    UCLog.i(String.format("The %s-th level clear!", curLevel));
+                    endEpisode();
+                    isStageStarted = false;
+                    curLevel++;
+                    if(curLevel > 21) {
+                        curLevel = 1;
+                    }
                     try {
-                        endEpisode();
-                        isStageStarted = false;
-                        UCLog.i(String.format("The %s-th level clear! Go to the next level.", curLevel));
-                        curLevel++;
-                        if(curLevel > 21) {
-                            curLevel = 1;
-                        }
                         robot.loadLevel(curLevel);
                     } catch (Exception e) {
                         UCLog.e(e.getMessage(), e);
                     }
                     break;
                 case LOST:
-                    try {
-                        endEpisode();
-                    } catch (Exception e) {
-                        UCLog.e(e.getMessage(), e);
-                    }
                     UCLog.w(String.format("Failed to beat stage %s. Retry it", curLevel));
+                    endEpisode();
                     isStageStarted = false;
                     robot.restartLevel();
                     break;
@@ -196,82 +200,138 @@ public class UCAgent implements Runnable {
     }
 
     private void startEpisode() {
-        UCLog.i(String.format("Starts %s-th episode in the level %s", stats.nTotalEpisodes() + 1, curLevel));
+        UCLog.i(String.format("Starts the %s-th EPISODE in the level %s", stats.nTotalEpisodes() + 1, curLevel));
 
         traces.clear();
+
         prevEpoch = stats.nTotalSteps() / configuration.nStepsPerEpoch();
         rewardBuilder = rewardBuilder.init();
         stepsPerEpisode = 0;
         timePerEpisode = System.currentTimeMillis();
         rewardsPerEpsiode = 0;
-        scoresPerEpsiode = 0;
     }
 
     private void step() throws Exception {
-        UCLog.i(String.format("%s-th steps of the %s-th episode in the level %s", stepsPerEpisode + 1, stats.nTotalEpisodes() + 1, curLevel));
+        UCLog.i(String.format("The %s-th steps of the %s-th EPISODE in the level %s", stepsPerEpisode + 1, stats.nTotalEpisodes() + 1, curLevel));
 
         Rectangle sling1 = robot.getSling();
         if(sling1 == null) {
+            UCLog.w("The first sling is not found. Retry this step.");
             return;
         }
 
         BufferedImage image = robot.doScreenShot();
-        UCObservation observation = observationBuilder.build(image);
-        INDArray state = observation.state();
-        double epsilon = Math.min(configuration.epsilonMin(), configuration.epsilonStart() - stats.nTotalSteps() * configuration.epsilonRate());
+        final UCObservation observation = observationBuilder.build(image);
+        final INDArray state = observation.state();
+        double epsilon = Math.max(configuration.epsilonMin(), configuration.epsilonStart() - stats.nTotalSteps() * configuration.epsilonRate());
         UCAction action;
-
         if(isTraining && random.nextDouble() < epsilon) {
-            action = actionBuilder.build(image, observation, random.nextInt(configuration.nActions()));
+            int actionId = random.nextInt(configuration.nActions());
+            UCLog.i(String.format("Current EPS = %s and select RANDOM ACTION %s ", epsilon, actionId));
+            action = actionBuilder.build(sling1, observation, actionId);
         } else {
             double maxQ = Double.NEGATIVE_INFINITY;
-            int actionId = 0;
+            int actionId = -1;
             for(int i = 0;i < configuration.nActions();i++) {
                 double q = qecTable.estimateQValue(state, i);
-                if(q > maxQ) {
+                if(!Double.isNaN(q) && q > maxQ) {
                     maxQ = q;
                     actionId = i;
                 }
             }
-            action = actionBuilder.build(image, observation, actionId);
+            if(actionId == -1) {
+                actionId = random.nextInt(configuration.nActions());
+            }
+            UCLog.i(String.format("Current EPS = %s and select SUBOPTIMAL ACTION %s ", epsilon, actionId));
+            action = actionBuilder.build(sling1, observation, actionId);
         }
         Rectangle sling2 = robot.getSling();
+        if(sling2 == null) {
+            UCLog.w("The second sling is not found. Retry this step.");
+            return;
+        }
 
+        final Shot shot = action.shot();
         if(UCActionRobot.isSameScale(sling1, sling2)) {
-            robot.shoot(action.shot(), 10000);
+            robot.shoot(shot, 0);
+        } else {
+            UCLog.w("Two slings are not same scale. Retry this step.");
+            return;
+        }
+
+        if(isTraining) {
+            new Thread() {
+                @Override
+                public void run() {
+                    BufferedImage canvas = UCVisionUtils.copy(observation.originalImage());
+                    try {
+                        Thread.sleep(5000);
+                    } catch (InterruptedException e) {
+                        UCLog.e(e.getMessage(), e);
+                    }
+                    try {
+                        BufferedImage trajImage = robot.doScreenShot();
+                        Vision vision = new Vision(trajImage);
+                        List<Point> actualTrajectories = vision.findEstimatedTrajPoints();
+                        canvas = UCVisionUtils.drawTrajectories(canvas, actualTrajectories, Color.RED, 3);
+                    } catch (NullPointerException e) {
+
+                    }
+
+                    try {
+                        List<Point> predictTrajectories = action.predictTrajectories();
+                        canvas = UCVisionUtils.drawTrajectories(canvas, predictTrajectories, Color.BLACK, 5);
+                    } catch (NullPointerException e) {
+
+                    }
+
+                    try {
+                        ImageIO.write(observation.preprocessedImage(), "png", new File(imgDir, stats.nTotalSteps() + "_preprocess.png"));
+                        ImageIO.write(canvas, "png", new File(imgDir, stats.nTotalSteps() + "_trajectories.png"));
+                    } catch (Exception e) {
+                        UCLog.e(e.getMessage(), e);
+                    }
+                }
+            }.start();
         }
 
         int score = robot.getScoreInGame();
-        UCReward reward = rewardBuilder.build(score);
+        final UCReward reward = rewardBuilder.build(score);
         traces.add(new UCTrace(observation, state, action, reward));
-
         stepsPerEpisode ++;
-        scoresPerEpsiode += score;
         rewardsPerEpsiode += reward.netReward();
         stats.updatePerSteps();
+
+        UCLog.i(String.format("The agent did ACTION %s (angle %s in degrees, tapping time %s in millis, or tapping percentile %s), and receive REWARD %s (%s in scores).",
+                action.id(), action.angleInDegrees(), shot.getT_tap(), action.tapTimeInPercentile(), reward.netReward(), reward.netScore()));
     }
 
-    private void endEpisode() throws Exception {
+    private void endEpisode() {
+        int score = Math.max(robot.getScoreEndGame(), 0);
+        stats.updatePerEpisode(curLevel, rewardsPerEpsiode, score);
+        timePerEpisode = System.currentTimeMillis() - timePerEpisode;
+        UCLog.i(String.format("The %s-th episode completes: %s steps, %s seconds, %s rewards, and %s scores.",
+                stats.nTotalEpisodes(), stepsPerEpisode, timePerEpisode / 1000, rewardsPerEpsiode, score));
+
         double qReturn = 0;
         for(int i = traces.size() - 1;i >= 0; i--) {
             UCTrace trace = traces.get(i);
             qReturn = qReturn * configuration.discountFactor() + trace.reward.netReward();
-            qecTable.update(trace.state, trace.action.id(), qReturn);
+            try {
+                qecTable.update(trace.state, trace.action.id(), qReturn);
+            } catch (Exception e) {
+                UCLog.e(e.getMessage(), e);
+            }
         }
-        int score = robot.getScoreEndGame();
-        stats.updatePerEpisode(curLevel, rewardsPerEpsiode, score);
-        timePerEpisode = System.currentTimeMillis() - timePerEpisode;
-        UCLog.i(String.format("The %s-th episode completes: %s steps, %s seconds, %s rewards, and %s scores.",
-                stats.nTotalEpisodes(), stepsPerEpisode, timePerEpisode / 1000, rewardsPerEpsiode, scoresPerEpsiode));
 
         int curEpoch = stats.nTotalSteps() / configuration.nStepsPerEpoch();
         if(prevEpoch != curEpoch) {
-            UCLog.i(String.format("Reach to the %s-th epoch. Save the agent information."));
-            serialize(new File("./autosave"), "conf.json", "qec.json", "stats.json");
+            UCLog.i(String.format("Reach to the %s-th epoch. Save the agent information.", curEpoch));
+            try {
+                serialize(saveDir, "conf.json", "qec.json", "stats.json");
+            } catch (IOException e) {
+                UCLog.e(e.getMessage(), e);
+            }
         }
-    }
-
-    public static void main(String args[]) throws IOException {
-
     }
 }

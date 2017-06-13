@@ -10,7 +10,7 @@ import java.util.TreeMap;
  * Created by keltp on 2017-06-11.
  */
 public class UCStatistics {
-    private final long startTime;
+    private final transient long startTime;
 
     private long totalTime;
     private int nTotalSteps;
@@ -94,14 +94,14 @@ public class UCStatistics {
     }
 
     public void serialize(File f) throws IOException {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
         FileWriter writer = new FileWriter(f);
         gson.toJson(this, writer);
         writer.close();
     }
 
     public static UCStatistics deserialize(File f) throws IOException {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
         BufferedReader reader = new BufferedReader(new FileReader(f));
         UCStatistics s = gson.fromJson(reader, UCStatistics.class);
         reader.close();
