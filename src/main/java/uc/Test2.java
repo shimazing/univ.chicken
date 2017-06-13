@@ -2,6 +2,8 @@ package uc;
 
         import org.nd4j.linalg.api.ndarray.INDArray;
         import org.nd4j.linalg.factory.Nd4j;
+        import org.nd4j.linalg.indexing.INDArrayIndex;
+        import org.nd4j.linalg.indexing.NDArrayIndex;
         import uc.data.QecTable;
 
         import javax.imageio.ImageIO;
@@ -15,12 +17,9 @@ package uc;
  */
 public class Test2 {
     public static void main(String args[]) throws Exception {
-        UCConfiguration conf = new UCConfiguration.Builder().maxStateCapacity(1000).nTapTimes(1).nAngles(4).nStepsPerEpoch(5).epsilonStart(0.0005).build();
+        UCConfiguration conf = new UCConfiguration.Builder().nStepsForEpsilonDecay(10000).build();
         UCAgent agent = new UCAgent(conf);
-        agent.run(2);
-
-        /*UCConfiguration conf = new UCConfiguration.Builder().maxStateCapacity(1000).nTapTimes(1).nAngles(4).stateDimension(2).kNearestNeighbor(5).build();
-        QecTable table = new QecTable(conf);*/
+        agent.run();
 
     }
 }

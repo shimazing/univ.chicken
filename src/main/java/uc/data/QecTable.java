@@ -3,12 +3,11 @@ package uc.data;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.deeplearning4j.berkeley.Pair;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 import uc.UCConfiguration;
 import uc.UCLog;
-import uc.distance.DistanceFunction;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -18,10 +17,6 @@ import java.util.TreeMap;
  * Created by WoohyeokChoi on 2017-06-06.
  */
 public class QecTable {
-    private static final String STATES_FILE_NAME = "states";
-    private static final String LRU_FILE_NAME = "lru";
-    private static final String Q_FILE_NAME = "qvalues";
-
     private KNNLRUCache[] buffers;
 
     private QecTable() {
@@ -33,17 +28,16 @@ public class QecTable {
         buffers = new KNNLRUCache[conf.nActions()];
         for(int i = 0;i < conf.nActions();i++) {
             buffers[i] = new KNNLRUCache(conf.maxStateCapacity(), conf.kNearestNeighbor(), conf.distantFunction(), conf.initialQValue());
-            UCLog.i(String.format("%s-th KNNLRUCache initialization - maxCapacity: %s, stateDimension: %s, kNearestNeighbor: %s, distantFunction: %s, initialQValue: %s",
-                    i, conf.maxAngle(), conf.stateDimension(), conf.kNearestNeighbor(), conf.distantFunction().getClass().getSimpleName(), conf.initialQValue()));
         }
     }
 
     public double estimateQValue(INDArray state, int action) throws Exception {
         UCLog.i(String.format("Estimate Q Value for %s-th KNNLRUCache.", action));
-        double q = buffers[action].getQValue(state);
+        INDArray _state = state.rows() != 1 ? state.transposei() : state;
+        double q = buffers[action].getQValue(_state.rows() != 1 ? state.transposei() : state);
         if(Double.isNaN(q)) {
             UCLog.i("There is no matched STATE-ACTION pair. Estimate Q Value with K-Nearest Neighbor.");
-            q = buffers[action].getKNNValue(state);
+            q = buffers[action].getKNNValue(_state);
         }
         UCLog.i(String.format("Estimated Q Values for %s-th KNNLRUCache: %s", action, q));
         return q;
@@ -51,115 +45,175 @@ public class QecTable {
 
     public double update(INDArray state, int action, double reward) throws Exception {
         UCLog.i(String.format("Update Q Value for %s-th KNNLRUCache with REWARD %s.", action, reward));
-        double q = buffers[action].update(state, reward);
+        INDArray _state = state.rows() != 1 ? state.transposei() : state;
+        double q = buffers[action].update(_state, reward);
         if(Double.isNaN(q)) {
             UCLog.i("There is no matched STATE-ACTION pair. BallTree will be rebuilt.");
-            buffers[action].add(state, reward);
+            buffers[action].add(_state, reward);
             q = reward;
         }
         return q;
     }
 
-    public void serialize(File fn, File dir) throws IOException {
-        if(!dir.exists()) {
-            dir.mkdirs();
-        }
+    public void serialize(File fn, File statesFile, File qFile, File lruFile) throws IOException {
+
         TreeMap<Integer, MetaData> data = new TreeMap<>();
 
+        int qValueColumn = 0;
+        int qValueRows = 0;
+        int lruValueColumn = 0;
+        int lruValueRows = 0;
+        int statesColumn = 0;
+        int statesRows = 0;
+
         for(int i = 0;i < buffers.length;i++) {
+            MetaData meta = new MetaData();
             KNNLRUCache buffer = buffers[i];
 
-            DataOutputStream output;
-
-            File statesFile = new File(dir, STATES_FILE_NAME + "_action_" + i);
-            output = new DataOutputStream(new FileOutputStream(statesFile));
-            if(buffer.states != null) {
-                Nd4j.write(buffer.states, output);
-            }
-            output.close();
-
-            File lruFile = new File(dir, LRU_FILE_NAME + "_action_" + i);
-            output = new DataOutputStream(new FileOutputStream(lruFile));
-            if(buffer.lruValues != null) {
-                Nd4j.write(buffer.lruValues, output);
+            if(buffer.states == null) {
+                meta.statesRowIndexFrom = -1;
+                meta.statesRowIndexTo = -1;
+            } else {
+                statesColumn = buffer.states.columns();
+                meta.statesRowIndexFrom = statesRows;
+                statesRows += buffer.states.rows();
+                meta.statesRowIndexTo = statesRows;
             }
 
-            output.close();
-
-            File qFile = new File(dir, Q_FILE_NAME + "_action_" + i);
-            output = new DataOutputStream(new FileOutputStream(qFile));
-            if(buffer.qValues != null) {
-                Nd4j.write(buffer.qValues, output);
+            if(buffer.qValues == null) {
+                meta.qValueRowIndex = -1;
+            } else {
+                qValueColumn = buffer.qValues.columns();
+                qValueRows++;
+                meta.qValueRowIndex = i;
             }
-            output.close();
 
-            MetaData meta = new MetaData();
-            meta.statesPath = statesFile.getCanonicalPath();
-            meta.lruPath = lruFile.getCanonicalPath();
-            meta.qValuesPath = qFile.getCanonicalPath();
+            if(buffer.lruValues == null) {
+                meta.lruValueRowIndex = -1;
+            } else {
+                lruValueColumn = buffer.lruValues.columns();
+                lruValueRows++;
+                meta.lruValueRowIndex = i;
+            }
+
             meta.timer = buffer.timer;
-            meta.curCapcity = buffer.curCapacity;
-
+            meta.curCapacity = buffer.curCapacity;
             data.put(i, meta);
         }
-
         Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
         FileWriter writer = new FileWriter(fn);
         gson.toJson(data, writer);
         writer.close();
+
+        INDArray states = null;
+        if(statesRows > 0 && statesColumn > 0) {
+            states = Nd4j.create(statesRows, statesColumn);
+        }
+
+        INDArray qValues = null;
+        if(qValueRows > 0 && qValueColumn > 0) {
+            qValues = Nd4j.create(qValueRows, qValueColumn);
+        }
+
+        INDArray lruValues = null;
+        if(lruValueRows > 0 && lruValueColumn > 0) {
+            lruValues = Nd4j.create(lruValueRows, lruValueColumn);
+        }
+
+        for(int i = 0;i < buffers.length;i++) {
+            MetaData meta = data.get(i);
+            KNNLRUCache buffer = buffers[i];
+            if(states != null && meta.statesRowIndexFrom != -1 && meta.statesRowIndexTo != -1) {
+                for(int j = 0; j < buffer.states.rows(); j++) {
+                    states.putRow(meta.statesRowIndexFrom + j, buffer.states.getRow(j));
+                }
+            }
+            if(qValues != null && meta.qValueRowIndex != -1) {
+                qValues.putRow(meta.qValueRowIndex, buffer.qValues);
+            }
+            if(lruValues != null && meta.lruValueRowIndex != -1) {
+                lruValues.putRow(meta.lruValueRowIndex, buffer.lruValues);
+            }
+        }
+
+        if(states != null) {
+            Nd4j.saveBinary(states, statesFile);
+        }
+
+        if(qValues != null) {
+            Nd4j.saveBinary(qValues, qFile);
+        }
+
+        if(lruValues != null) {
+            Nd4j.saveBinary(lruValues, lruFile);
+        }
+
+
     }
 
-    public static QecTable deserialize(File f, UCConfiguration conf) throws Exception {
+    public static QecTable deserialize(File metaFile, File statesFile, File qFile, File lruFile, UCConfiguration conf) throws Exception {
         QecTable table = new QecTable();
         table.buffers = new KNNLRUCache[conf.nActions()];
 
         Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
-        BufferedReader reader = new BufferedReader(new FileReader(f));
+        BufferedReader reader = new BufferedReader(new FileReader(metaFile));
         Type type = new TypeToken<TreeMap<Integer, MetaData>>() {}.getType();
         TreeMap<Integer, MetaData> data = gson.fromJson(reader, type);
 
+        INDArray states = null;
+        if(statesFile.exists()) {
+            states = Nd4j.readBinary(statesFile);
+        }
+
+        INDArray qValues = null;
+        if(qFile.exists()) {
+            qValues = Nd4j.readBinary(qFile);
+        }
+
+        INDArray lruValues = null;
+        if(lruFile.exists()) {
+            lruValues = Nd4j.readBinary(lruFile);
+        }
+
         for(Integer index : data.keySet()) {
             MetaData meta = data.get(index);
-            DataInputStream input;
+            INDArray subStates = null;
+            INDArray subQValues = null;
+            INDArray subLRUValues = null;
 
-            File statesFile = new File(meta.statesPath);
-            INDArray states = null;
-            if(statesFile.exists()) {
-                input = new DataInputStream(new FileInputStream(statesFile));
-                states = Nd4j.read(input);
-                input.close();
+            if(states != null) {
+                if(meta.statesRowIndexTo != -1 && meta.statesRowIndexFrom != -1) {
+                    subStates = states.get(NDArrayIndex.interval(meta.statesRowIndexFrom, meta.statesRowIndexTo), NDArrayIndex.all()).dup();
+                }
             }
 
-            File lruFile = new File(meta.lruPath);
-            INDArray lru = null;
-            if(lruFile.exists()) {
-                input = new DataInputStream(new FileInputStream(lruFile));
-                lru = Nd4j.read(input);
-                input.close();
+            if(qValues != null) {
+                if(meta.qValueRowIndex != -1) {
+                    subQValues = qValues.getRow(meta.qValueRowIndex).dup();
+                }
             }
 
-
-            File qValueFile = new File(meta.qValuesPath);
-            INDArray qvalue = null;
-            if(qValueFile.exists()) {
-                input = new DataInputStream(new FileInputStream(new File(meta.qValuesPath)));
-                qvalue = Nd4j.read(input);
-                input.close();
+            if(lruValues != null) {
+                if(meta.lruValueRowIndex != -1) {
+                    subLRUValues = lruValues.getRow(meta.lruValueRowIndex).dup();
+                }
             }
+
             double timer = meta.timer;
-            int curCapcity = meta.curCapcity;
+            int curCapacity = meta.curCapacity;
 
             table.buffers[index] = new KNNLRUCache(conf.maxStateCapacity(), conf.kNearestNeighbor(), conf.distantFunction(), conf.initialQValue(),
-                    states, qvalue, lru, timer, curCapcity);
+                    subStates, subQValues, subLRUValues, timer, curCapacity);
         }
         return table;
     }
 
     private static class MetaData {
-        String statesPath;
-        String lruPath;
-        String qValuesPath;
+        int statesRowIndexFrom;
+        int statesRowIndexTo;
+        int lruValueRowIndex;
+        int qValueRowIndex;
         double timer;
-        int curCapcity;
+        int curCapacity;
     }
 }

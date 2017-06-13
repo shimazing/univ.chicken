@@ -81,21 +81,26 @@ public class UCAgent implements Runnable {
         this(conf, table, null);
     }
 
-    public void serialize(File dir, String confFileName, String qecFileName, String statsFileName) throws IOException {
+    public void serialize(File dir, String confFileName,
+                          String qecSettingFileName, String statesFileName, String qValuesFileName,
+                          String lruValuesFileName, String statsFileName) throws IOException {
         if(!dir.exists()) {
             dir.mkdirs();
         }
 
         configuration.serialize(new File(dir, confFileName));
-        qecTable.serialize(new File(dir, qecFileName), new File(dir, "qec_table"));
+        qecTable.serialize(new File(dir, qecSettingFileName), new File(dir, statesFileName), new File(dir, qValuesFileName), new File(dir, lruValuesFileName));
         stats.serialize(new File(dir, statsFileName));
     }
 
-    public static UCAgent deserialize(File dir, String confFileName, String qecFileName, String statesFileName) throws Exception {
+    public static UCAgent deserialize(File dir, String confFileName,
+                                      String qecSettingFileName, String statesFileName, String qValuesFileName,
+                                      String lruValuesFileName, String statsFileName) throws Exception {
         UCConfiguration configuration = UCConfiguration.deserializeFromJson(new File(dir, confFileName));
-        QecTable qecTable = QecTable.deserialize(new File(dir, qecFileName),
+        QecTable qecTable = QecTable.deserialize(new File(dir, qecSettingFileName),
+                new File(dir, statesFileName), new File(dir, qValuesFileName), new File(dir, lruValuesFileName),
                 configuration);
-        UCStatistics stats = UCStatistics.deserialize(new File(dir, statesFileName));
+        UCStatistics stats = UCStatistics.deserialize(new File(dir, statsFileName));
 
         return new UCAgent(configuration, qecTable, stats);
     }
@@ -328,7 +333,7 @@ public class UCAgent implements Runnable {
         if(prevEpoch != curEpoch) {
             UCLog.i(String.format("Reach to the %s-th epoch. Save the agent information.", curEpoch));
             try {
-                serialize(saveDir, "conf.json", "qec.json", "stats.json");
+                serialize(saveDir, "conf.json", "qec.json", "states.bin", "qvalues.bin", "lruvalues.bin", "stats.json");
             } catch (IOException e) {
                 UCLog.e(e.getMessage(), e);
             }
