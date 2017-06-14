@@ -129,19 +129,9 @@ public class UCAgent implements Runnable {
             switch (state) {
                 case UNKNOWN:
                     UCLog.w("Unknown game state...");
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        UCLog.e(e.getMessage(), e);
-                    }
                     break;
                 case LOADING:
                     UCLog.i("Loading stage...");
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        UCLog.e(e.getMessage(), e);
-                    }
                     break;
                 case LEVEL_SELECTION:
                     UCLog.w("Unexpected level selection page. Go to the lastly played level.");

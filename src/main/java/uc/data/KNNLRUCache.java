@@ -84,7 +84,15 @@ public class KNNLRUCache {
         }
 
         Pair<Double, Integer> nn = tree.nn(state);
+        if(nn == null) {
+            return -1;
+        }
         int index = nn.getSecond();
+
+        if(states == null) {
+            return -1;
+        }
+
         INDArray stateStored = states.getRow(index);
 
         if(state.equalsWithEps(stateStored, Nd4j.EPS_THRESHOLD)) {
@@ -119,6 +127,10 @@ public class KNNLRUCache {
         }
 
         List<Pair<Double, Integer>> knn = tree.knn(state, k);
+        if(knn == null || knn.size() == 0) {
+            return Double.NaN;
+        }
+
         double q = 0.0;
         for(Pair<Double, Integer> pair : knn) {
             int index = pair.getSecond();
