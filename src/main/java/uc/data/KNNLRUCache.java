@@ -43,7 +43,7 @@ public class KNNLRUCache {
         return lruValues;
     }
 
-    protected KNNLRUCache(int maxCapacity, int k, DistanceFunction<Integer, Double> distFunc, double initQValue) throws Exception {
+    public KNNLRUCache(int maxCapacity, int k, DistanceFunction<Integer, Double> distFunc, double initQValue) throws Exception {
         this(maxCapacity, k, distFunc, initQValue, null, null, null, 0.0, 0);
     }
 
@@ -78,28 +78,35 @@ public class KNNLRUCache {
         }
     }
 
-    private int find(INDArray state) throws Exception {
+    public int find(INDArray state) throws Exception {
         if(curCapacity == 0) {
+            System.out.println("capacity");
             return -1;
         }
 
         Pair<Double, Integer> nn = tree.nn(state);
         if(nn == null) {
+            System.out.println("no nn");
             return -1;
         }
         int index = nn.getSecond();
 
         if(states == null) {
+            System.out.println("no states");
             return -1;
         }
 
         INDArray stateStored = states.getRow(index);
 
         if(state.equalsWithEps(stateStored, Nd4j.EPS_THRESHOLD)) {
+
             lruValues.putScalar(index, timer);
             timer += 0.01;
             return index;
         }
+        System.out.println("not same");
+        System.out.println(state);
+        System.out.println(stateStored);
         return -1;
     }
 
@@ -127,6 +134,7 @@ public class KNNLRUCache {
         }
 
         List<Pair<Double, Integer>> knn = tree.knn(state, k);
+
         if(knn == null || knn.size() == 0) {
             return Double.NaN;
         }
@@ -151,6 +159,7 @@ public class KNNLRUCache {
             Nd4j.getExecutioner().exec(argMin);
             index = argMin.getFinalResult();
         }
+
 
         if(index > -1) {
             if(states == null || states.rows() == 0) {

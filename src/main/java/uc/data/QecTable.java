@@ -36,12 +36,12 @@ public class QecTable {
     }
 
     public double estimateQValue(INDArray state, int action) throws Exception {
-        //UCLog.i(String.format("Estimate Q Value for %s-th KNNLRUCache.", action));
         INDArray _state = state.rows() != 1 ? state.transposei() : state;
         double q = buffers[action].getQValue(_state.rows() != 1 ? state.transposei() : state);
         if(Double.isNaN(q)) {
-          //  UCLog.i("There is no matched STATE-ACTION pair. Estimate Q Value with K-Nearest Neighbor.");
             q = buffers[action].getKNNValue(_state);
+        } else {
+            UCLog.i("Find matched action-state pair in action " + action);
         }
         //UCLog.i(String.format("Estimated Q Values for %s-th KNNLRUCache: %s", action, q));
         return q;

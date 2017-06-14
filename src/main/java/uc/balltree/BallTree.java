@@ -14,7 +14,7 @@ import java.util.List;
  * Created by keltp on 2017-06-05.
  */
 public class BallTree {
-    private final int maxInstancesInLeaf = 40;
+    private final int maxInstancesInLeaf = 20;
     private final double  maxRelativeLeafRadius = 0.001;
 
     private BallNode rootNode;
@@ -77,22 +77,41 @@ public class BallTree {
         INDArray furthest1 = null;
         INDArray furthest2 = null;
         INDArray pivot = node.pivot;
+        INDArray distances = Nd4j.create(node.n);
 
-        Pair<Integer, Double> p1 = func.maxDistance(data, pivot);
-        furthest1 = data.getRow(p1.getFirst()).dup();
+        double maxDist = Double.NEGATIVE_INFINITY;
+        for(int i = node.start; i <= node.end; i++) {
+            INDArray temp = data.getRow(indices.getInt(i));
+            double dist = func.distance(temp, pivot);
+            if(dist > maxDist) {
+                maxDist = dist;
+                furthest1 = temp;
+            }
+        }
 
-        INDArray distList = func.distances(data.get(NDArrayIndex.interval(node.start, node.start + node.n, false)), furthest1);
-        furthest2 = data.getRow(Nd4j.getExecutioner().execAndReturn(new IMax(distList)).getFinalResult()).dup();
+        maxDist = Double.NEGATIVE_INFINITY;
+        furthest1 = furthest1.dup();
+
+        for (int i = 0; i < node.n; i++) {
+            INDArray temp = data.getRow(indices.getInt(i + node.start));
+            double dist = func.distance(furthest1, temp);
+            distances.putScalar(i, dist);
+            if(dist > maxDist) {
+                maxDist = dist;
+                furthest2 = temp;
+            }
+        }
+
+        furthest2 = furthest2.dup();
 
         int nRight = 0;
-        double curDist = 0.0;
+
         for(int i = 0;i < node.n - nRight;i++) {
-            INDArray rowDatum = data.getRow(i + node.start);
-            curDist = func.distance(furthest2, rowDatum);
-            double _dist = distList.getDouble(i);
-            if(curDist < _dist) {
+            INDArray temp = data.getRow(indices.getInt(i + node.start));
+            double dist = func.distance(furthest2, temp);
+            if(dist < distances.getDouble(i)) {
                 swap(indices, node.end - nRight, node.start + i);
-                swap(distList, distList.length() - 1 - nRight, i);
+                swap(distances, distances.length() - 1 - nRight, i);
                 nRight++;
                 i--;
             }
@@ -111,28 +130,40 @@ public class BallTree {
     }
 
 
-    public List<Pair<Double, Integer>> knn(INDArray target, int k) throws Exception {
-        Heap heap = new Heap(k);
-        knn(heap, rootNode, target, k);
-        List<Pair<Double, Integer>> neighbors = new ArrayList<>();
-
-        while(heap.noOfKthNearest() > 0) {
-            HeapElement h = heap.getKthNearest();
-            neighbors.add(new Pair<>(h.distance, h.index));
-        }
-        while(heap.size() > 0) {
-            HeapElement h = heap.get();
-            neighbors.add(new Pair<>(h.distance, h.index));
-        }
-        return neighbors;
-    }
-
     public Pair<Double, Integer> nn(INDArray target) throws Exception {
         List<Pair<Double, Integer>> nn = knn(target, 1);
+        System.out.println(nn.size());
         if(nn != null && nn.size() > 0) {
             return nn.get(0);
         }
         return null;
+    }
+
+    public List<Pair<Double, Integer>> knn(INDArray target, int k) throws Exception {
+        Heap heap = new Heap(k);
+
+        knn(heap, rootNode, target, k);
+        List<Pair<Double, Integer>> neighbors = new ArrayList<>();
+        int[] indices = new int[heap.totalSize()];
+        double[] distances = new double[heap.totalSize()];
+        int i = 1;
+        while(heap.noOfKthNearest() > 0) {
+            HeapElement h = heap.getKthNearest();
+            indices[indices.length - i] = h.index;
+            distances[distances.length - i] = h.distance;
+            i++;
+        }
+        while(heap.size() > 0) {
+            HeapElement h = heap.get();
+            indices[indices.length - i] = h.index;
+            distances[distances.length - i] = h.distance;
+            i++;
+        }
+        for(i = 0;i < indices.length; i++) {
+            neighbors.add(new Pair<>(distances[i], indices[i]));
+        }
+
+        return neighbors;
     }
 
     private void knn(Heap heap, BallNode node, INDArray target, int k) throws Exception {
@@ -173,18 +204,20 @@ public class BallTree {
         } else {
             for(int i = node.start; i <= node.end; i++) {
                 int index = indices.getInt(i);
-                if(target.neq(data.getRow(index)).sumNumber().doubleValue() == 0) {
+                System.out.println(index);
+                if(target.equalsWithEps(data.getRow(index), Nd4j.EPS_THRESHOLD)) {
+                    heap.put(index, 0);
                     continue;
                 }
                 if(heap.totalSize() < k) {
                     dist = func.distance(target, data.getRow(index));
-                    heap.put(indices.getInt(i), dist);
+                    heap.put(index, dist);
                 } else {
                     HeapElement head = heap.peek();
                     dist = func.distance(target, data.getRow(index));
                     if(dist < head.distance) {
                         heap.putBySubstitute(index, dist);
-                    } else if (dist == head.distance) {
+                    } else {
                         heap.putKthNearest(index, dist);
                     }
                 }
