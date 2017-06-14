@@ -184,7 +184,7 @@ public class UCActionRobot {
 
     public int getScoreInGame() {
         int prevScore = -1;
-
+        int n = 9;
         for(int i = 0;i < 10;i++) {
             BufferedImage image = doScreenShot();
             if(image == null) {
@@ -207,6 +207,13 @@ public class UCActionRobot {
             } catch (InterruptedException e) {
                 UCLog.e(e.getMessage(), e);
             }
+            n--;
+        }
+
+        try {
+            Thread.sleep(n * 1000);
+        } catch (InterruptedException e) {
+            UCLog.e(e.getMessage(), e);
         }
 
         return prevScore;

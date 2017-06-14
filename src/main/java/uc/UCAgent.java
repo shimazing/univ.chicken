@@ -303,8 +303,8 @@ public class UCAgent implements Runnable {
                 }
             }.start();
         }
-
         int score = robot.getScoreInGame();
+
         final UCReward reward = rewardBuilder.build(score);
         traces.add(new UCTrace(observation, state, action, reward));
         stepsPerEpisode ++;

@@ -111,14 +111,13 @@ public class UCObservation {
             }
             double pixelPerScale = sling.getHeight() + sling.getWidth();
 
-            List<ABObject> birds = zoomOutVision.findBirdsMBR();
+
+            Vision zoomInVision = new Vision(zoomInImage);
+            List<ABObject> birds = zoomInVision.findBirdsMBR();
             if(birds == null || birds.size() == 0) {
-                Vision zoomInVision = new Vision(zoomInImage);
-                birds = zoomInVision.findBirdsMBR();
-                if(birds == null || birds.size() == 0) {
-                    throw new Exception("Cannot find any birds. Maybe the game state is not equal to PLAYING.");
-                }
+                throw new Exception("Cannot find any birds. Maybe the game state is not equal to PLAYING.");
             }
+
             UCLog.i(String.format("Find %s birds.", birds.size()));
 
             List<ABObject> allObjects = new ArrayList<>();
