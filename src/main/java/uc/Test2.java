@@ -17,9 +17,8 @@ package uc;
  */
 public class Test2 {
     public static void main(String args[]) throws Exception {
-        UCConfiguration conf = new UCConfiguration.Builder().nStepsForEpsilonDecay(3000).build();
+        UCConfiguration conf = new UCConfiguration.Builder().nStepsForEpsilonDecay(1500).build();
         UCAgent agent = new UCAgent(conf);
-        agent.run(11);
-
+        agent.run();
     }
 }

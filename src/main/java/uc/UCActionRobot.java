@@ -186,14 +186,21 @@ public class UCActionRobot {
         int prevScore = -1;
         int n = 10;
         for(int i = 0;i < 10;i++) {
+            try {
+                Thread.sleep(n * 1000);
+            } catch (InterruptedException e) {
+                UCLog.e(e.getMessage(), e);
+            }
+            n--;
+
             BufferedImage image = doScreenShot();
             if(image == null) {
-                break;
+                continue;
             }
 
             GameStateExtractor.GameState state = stateExtractor.getGameState(image);
             if(state != GameStateExtractor.GameState.PLAYING) {
-                break;
+                continue;
             }
 
             int score = stateExtractor.getScoreInGame(image);
@@ -201,51 +208,32 @@ public class UCActionRobot {
                 break;
             }
             prevScore = score;
-
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                UCLog.e(e.getMessage(), e);
-            }
-            n--;
-        }
-
-        try {
-            Thread.sleep(n * 1000);
-        } catch (InterruptedException e) {
-            UCLog.e(e.getMessage(), e);
         }
 
         return prevScore;
     }
 
     public int getScoreEndGame() {
-        int prevScore = -1;
+        int score = -1;
         for(int i = 0; i < 10;i++) {
-            System.out.println("getScoreEndGame");
-            BufferedImage image = doScreenShot();
-            if(image == null) {
-                break;
-            }
-
-            GameStateExtractor.GameState state = stateExtractor.getGameState(image);
-            if(state != GameStateExtractor.GameState.WON) {
-                break;
-            }
-
-            int score = stateExtractor.getScoreEndGame(image);
-            if(prevScore == -1) {
-                prevScore = score;
-             } else if (score == prevScore) {
-                break;
-             }
-
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 UCLog.e(e.getMessage(), e);
             }
+
+            BufferedImage image = doScreenShot();
+            if(image == null) {
+                continue;
+            }
+
+            GameStateExtractor.GameState state = stateExtractor.getGameState(image);
+            if(state != GameStateExtractor.GameState.WON) {
+                continue;
+            }
+
+            score = stateExtractor.getScoreEndGame(image);
         }
-        return prevScore;
+        return score;
     }
 }

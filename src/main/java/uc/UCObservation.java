@@ -196,7 +196,7 @@ public class UCObservation {
                     for(int ny = 0; ny < 6; ny++) {
                         int[] rgb = toRGB(bird.getType());
                         double v = UCVisionUtils.rgbToNormalizedGreyScale(rgb[0], rgb[1], rgb[2]);
-                        obs.observationMatrix.putScalar(ny, i * 10 + nx, v);
+                        obs.observationMatrix.putScalar(ny, i * 8 + nx, v);
                     }
                 }
             }

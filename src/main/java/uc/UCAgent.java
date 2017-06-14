@@ -230,6 +230,8 @@ public class UCAgent implements Runnable {
         robot.fullyZoomIn();
         BufferedImage zoomInImage = robot.doScreenShot();
 
+        Thread.sleep(1000);
+
         robot.fullyZoomOut();
         BufferedImage zoomOutImage = robot.doScreenShot();
 
