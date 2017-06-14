@@ -151,18 +151,23 @@ public class UCActionRobot {
     public Rectangle getSling() {
         BufferedImage image;
         Rectangle sling = null;
-
-        while (sling == null && getGameState(image = doScreenShot()) == GameStateExtractor.GameState.PLAYING) {
-            fullyZoomOut();
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                UCLog.e(e.getMessage(), e);
+        while(true) {
+            if(sling != null) {
+                break;
             }
+            image = doScreenShot();
+            if(image == null) {
+                break;
+            }
+
+            GameStateExtractor.GameState state = getGameState(image);
+            if(state != GameStateExtractor.GameState.PLAYING) {
+                break;
+            }
+            fullyZoomOut();
             Vision vision = new Vision(image);
             sling = vision.findSlingshotMBR();
         }
-
         return sling;
     }
 

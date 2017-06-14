@@ -23,6 +23,10 @@ public class QecTable {
 
     }
 
+    public KNNLRUCache[] getBuffers() {
+        return buffers;
+    }
+
     public QecTable(UCConfiguration conf) throws Exception {
         UCLog.i(String.format("QecTable initialization with %s actions.", conf.nActions()));
         buffers = new KNNLRUCache[conf.nActions()];

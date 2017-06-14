@@ -31,6 +31,18 @@ public class KNNLRUCache {
     protected double timer;
     protected int curCapacity;
 
+    public INDArray states() {
+        return states;
+    }
+
+    public INDArray qValues() {
+        return qValues;
+    }
+
+    public INDArray lruValues() {
+        return lruValues;
+    }
+
     protected KNNLRUCache(int maxCapacity, int k, DistanceFunction<Integer, Double> distFunc, double initQValue) throws Exception {
         this(maxCapacity, k, distFunc, initQValue, null, null, null, 0.0, 0);
     }

@@ -315,8 +315,8 @@ public class UCAgent implements Runnable {
         int score = Math.max(robot.getScoreEndGame(), 0);
         stats.updatePerEpisode(curLevel, rewardsPerEpsiode, score);
         timePerEpisode = System.currentTimeMillis() - timePerEpisode;
-        UCLog.i(String.format("The %s-th episode completes: %s steps, %s seconds, %s rewards, and %s scores.",
-                stats.nTotalEpisodes(), stepsPerEpisode, timePerEpisode / 1000, rewardsPerEpsiode, score));
+        UCLog.i(String.format("The %s-th episode and %s-th steps completes: %s steps, %s seconds, %s rewards, and %s scores.",
+                stats.nTotalEpisodes(), stats.nTotalSteps(), stepsPerEpisode, timePerEpisode / 1000, rewardsPerEpsiode, score));
 
         double qReturn = 0;
         for(int i = traces.size() - 1;i >= 0; i--) {
