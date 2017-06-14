@@ -5,6 +5,7 @@ import ab.vision.ABType;
 import ab.vision.Vision;
 import ab.vision.real.shape.Poly;
 import ab.vision.real.shape.Rect;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
@@ -99,17 +100,29 @@ public class UCObservation {
             randomProjection = conf.randomProjection();
         }
 
-        public UCObservation build(BufferedImage image) throws IOException {
+        public UCObservation build(BufferedImage image) throws Exception {
+            if(image == null) {
+                throw new Exception("Image is null. Retry it.");
+            }
             Vision vision = new Vision(image);
             Rectangle sling = vision.findSlingshotMBR();
+            if(sling == null) {
+                throw new Exception("Cannot find sling. Maybe the game state is not equal to PLAYING.");
+            }
             double pixelPerScale = sling.getHeight() + sling.getWidth();
 
             List<ABObject> birds = vision.findBirdsMBR();
-            List<ABObject> allObjects = new ArrayList<>();
+            if(birds == null || birds.size() == 0) {
+                throw new Exception("Cannot find any birds. Maybe the game state is not equal to PLAYING.");
+            }
 
+            List<ABObject> allObjects = new ArrayList<>();
             allObjects.addAll(vision.findBlocksRealShape());
             allObjects.addAll(vision.findHills());
             allObjects.addAll(vision.findPigsRealShape());
+            if(allObjects.size() == 0) {
+                throw new Exception("Cannot find any objects (e.g., blocks, hills, pigs). Maybe the game state is not equal to PLAYING.");
+            }
 
             UCObservation obs = new UCObservation();
             obs.observationMatrix = Nd4j.zeros(observationMatrixRows, observationMatrixColumns);
@@ -119,6 +132,10 @@ public class UCObservation {
             obs.yOffset = vision.findGroundLevel();
             obs.originalImage = image;
             obs.randomProjection = randomProjection;
+
+            if(obs.yOffset() <= 0) {
+                throw new Exception("Cannot find correct ground level. Maybe the game state is not equal to PLAYING.");
+            }
 
             for(int nx = 0; nx < observationMatrixColumns; nx++) {
                 for (int ny = 0; ny < observationMatrixRows; ny++) {
