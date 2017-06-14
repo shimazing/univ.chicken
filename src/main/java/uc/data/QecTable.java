@@ -36,23 +36,23 @@ public class QecTable {
     }
 
     public double estimateQValue(INDArray state, int action) throws Exception {
-        UCLog.i(String.format("Estimate Q Value for %s-th KNNLRUCache.", action));
+        //UCLog.i(String.format("Estimate Q Value for %s-th KNNLRUCache.", action));
         INDArray _state = state.rows() != 1 ? state.transposei() : state;
         double q = buffers[action].getQValue(_state.rows() != 1 ? state.transposei() : state);
         if(Double.isNaN(q)) {
-            UCLog.i("There is no matched STATE-ACTION pair. Estimate Q Value with K-Nearest Neighbor.");
+          //  UCLog.i("There is no matched STATE-ACTION pair. Estimate Q Value with K-Nearest Neighbor.");
             q = buffers[action].getKNNValue(_state);
         }
-        UCLog.i(String.format("Estimated Q Values for %s-th KNNLRUCache: %s", action, q));
+        //UCLog.i(String.format("Estimated Q Values for %s-th KNNLRUCache: %s", action, q));
         return q;
     }
 
     public double update(INDArray state, int action, double reward) throws Exception {
-        UCLog.i(String.format("Update Q Value for %s-th KNNLRUCache with REWARD %s.", action, reward));
+        //UCLog.i(String.format("Update Q Value for %s-th KNNLRUCache with REWARD %s.", action, reward));
         INDArray _state = state.rows() != 1 ? state.transposei() : state;
         double q = buffers[action].update(_state, reward);
         if(Double.isNaN(q)) {
-            UCLog.i("There is no matched STATE-ACTION pair. BallTree will be rebuilt.");
+            //UCLog.i("There is no matched STATE-ACTION pair. BallTree will be rebuilt.");
             buffers[action].add(_state, reward);
             q = reward;
         }

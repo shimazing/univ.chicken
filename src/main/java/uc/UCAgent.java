@@ -218,11 +218,11 @@ public class UCAgent implements Runnable {
             return;
         }
         robot.fullyZoomIn();
-        BufferedImage zoomInImage = robot.doScreenShot();
-
         Thread.sleep(1000);
-
+        BufferedImage zoomInImage = robot.doScreenShot();
+        Thread.sleep(1000);
         robot.fullyZoomOut();
+        Thread.sleep(1000);
         BufferedImage zoomOutImage = robot.doScreenShot();
 
         final UCObservation observation = observationBuilder.build(zoomOutImage, zoomInImage);
@@ -231,7 +231,7 @@ public class UCAgent implements Runnable {
         UCAction action;
         if(isTraining && random.nextDouble() < epsilon) {
             int actionId = random.nextInt(configuration.nActions());
-            UCLog.i(String.format("Current EPS = %s and select RANDOM ACTION %s ", epsilon, actionId));
+            UCLog.i(String.format("Current EPS = %s and select RANDOM ACTION %s.", epsilon, actionId));
             action = actionBuilder.build(sling1, observation, actionId);
         } else {
             double maxQ = Double.NEGATIVE_INFINITY;
@@ -245,9 +245,12 @@ public class UCAgent implements Runnable {
             }
             if(actionId == -1) {
                 actionId = random.nextInt(configuration.nActions());
+                UCLog.i(String.format("Current EPS = %s and tried to find SUBOPTIMAL ACTION, but cannot find matched state-action pairs; pick RANDOM ACTION %s.", epsilon, actionId));
+                action = actionBuilder.build(sling1, observation, actionId);
+            } else {
+                UCLog.i(String.format("Current EPS = %s and select SUBOPTIMAL ACTION %s ", epsilon, actionId));
+                action = actionBuilder.build(sling1, observation, actionId);
             }
-            UCLog.i(String.format("Current EPS = %s and select SUBOPTIMAL ACTION %s ", epsilon, actionId));
-            action = actionBuilder.build(sling1, observation, actionId);
         }
         Rectangle sling2 = robot.getSling();
         if(sling2 == null) {

@@ -12,8 +12,8 @@ import java.util.logging.*;
  * Created by keltp on 2017-06-10.
  */
 public class UCLog {
-    private static final SimpleDateFormat fFormat = new SimpleDateFormat("yyyy-MM-dd hh.mm.ss.SSS");
-    private static final SimpleDateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
+    private static final SimpleDateFormat fFormat = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss.SSS");
+    private static final SimpleDateFormat lFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
     private static Logger logger;
 
     static {
