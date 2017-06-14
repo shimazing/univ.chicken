@@ -103,9 +103,12 @@ public class UCAction {
 
     private int predictTapTime(Point impactPoint) {
         double inGameAngleInRadians = Math.toRadians(inGameAngleInDegrees);
-        double xVelocity = velocity * Math.cos(inGameAngleInRadians);
+        double cos = Math.cos(inGameAngleInRadians);
+        double xVelocity = velocity * cos;
         int scale = sling.height + sling.width;
-        double distance = (impactPoint.x - sling.x + xVelocity * 0.4 * scale) * tapTimeInPercentile / scale;
+        double tapPoint = sling.x + (impactPoint.x - sling.x) * tapTimeInPercentile;
+        double pullback = scale * 0.4 * cos;
+        double distance = (tapPoint - getReferencePoint().x + pullback) / scale;
         return (int) (distance / xVelocity * 815);
     }
 

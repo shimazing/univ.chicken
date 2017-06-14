@@ -200,6 +200,9 @@ public class UCAgent implements Runnable {
                     isStageStarted = false;
                     robot.restartLevel();
                     break;
+                default:
+                    UCLog.w("Unknown errors...");
+                    break;
             }
         }
     }
@@ -319,7 +322,7 @@ public class UCAgent implements Runnable {
         int score = Math.max(robot.getScoreEndGame(), 0);
         stats.updatePerEpisode(curLevel, rewardsPerEpsiode, score);
         timePerEpisode = System.currentTimeMillis() - timePerEpisode;
-        UCLog.i(String.format("The %s-th episode and %s-th steps completes: %s steps, %s seconds, %s rewards, and %s scores.",
+        UCLog.i(String.format("The %s-th EPISODE and %s-th STEPS completes: %s STEPS, %s SECONDS, %s REWARDS, and %s SCORES in this EPISODE.",
                 stats.nTotalEpisodes(), stats.nTotalSteps(), stepsPerEpisode, timePerEpisode / 1000, rewardsPerEpsiode, score));
 
         double qReturn = 0;

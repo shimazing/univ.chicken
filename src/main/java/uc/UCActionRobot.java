@@ -150,7 +150,7 @@ public class UCActionRobot {
     public Rectangle getSling() {
         BufferedImage image;
         Rectangle sling = null;
-        while(true) {
+        for(int i = 0;i < 10;i++) {
             if(sling != null) {
                 break;
             }
@@ -221,7 +221,8 @@ public class UCActionRobot {
 
     public int getScoreEndGame() {
         int prevScore = -1;
-        while(true) {
+        for(int i = 0; i < 10;i++) {
+            System.out.println("getScoreEndGame");
             BufferedImage image = doScreenShot();
             if(image == null) {
                 break;
