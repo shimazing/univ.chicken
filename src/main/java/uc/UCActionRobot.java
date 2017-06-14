@@ -184,7 +184,7 @@ public class UCActionRobot {
 
     public int getScoreInGame() {
         int prevScore = -1;
-        int n = 9;
+        int n = 10;
         for(int i = 0;i < 10;i++) {
             BufferedImage image = doScreenShot();
             if(image == null) {
