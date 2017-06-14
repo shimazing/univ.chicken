@@ -187,7 +187,7 @@ public class UCActionRobot {
         int n = 10;
         for(int i = 0;i < 10;i++) {
             try {
-                Thread.sleep(n * 1000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 UCLog.e(e.getMessage(), e);
             }
@@ -208,6 +208,12 @@ public class UCActionRobot {
                 break;
             }
             prevScore = score;
+        }
+
+        try {
+            Thread.sleep(n * 1000);
+        } catch (InterruptedException e) {
+            UCLog.e(e.getMessage(), e);
         }
 
         return prevScore;
