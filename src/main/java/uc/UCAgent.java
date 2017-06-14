@@ -224,9 +224,13 @@ public class UCAgent implements Runnable {
             UCLog.w("The first sling is not found. Retry this step.");
             return;
         }
+        robot.fullyZoomIn();
+        BufferedImage zoomInImage = robot.doScreenShot();
 
-        BufferedImage image = robot.doScreenShot();
-        final UCObservation observation = observationBuilder.build(image);
+        robot.fullyZoomOut();
+        BufferedImage zoomOutImage = robot.doScreenShot();
+
+        final UCObservation observation = observationBuilder.build(zoomOutImage, zoomInImage);
         final INDArray state = observation.state();
         double epsilon = Math.max(configuration.epsilonMin(), configuration.epsilonStart() - stats.nTotalSteps() * configuration.epsilonRate());
         UCAction action;

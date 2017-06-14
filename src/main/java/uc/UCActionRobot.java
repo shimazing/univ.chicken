@@ -72,7 +72,6 @@ public class UCActionRobot {
     }
 
     public BufferedImage doScreenShot() {
-        fullyZoomOut();
         byte[] imageBytes = proxy.send(new ProxyScreenshotMessage());
         BufferedImage image = null;
         try {

@@ -19,7 +19,7 @@ public class Test2 {
     public static void main(String args[]) throws Exception {
         UCConfiguration conf = new UCConfiguration.Builder().nStepsForEpsilonDecay(3000).build();
         UCAgent agent = new UCAgent(conf);
-        agent.run();
+        agent.run(11);
 
     }
 }

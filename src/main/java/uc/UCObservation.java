@@ -100,37 +100,43 @@ public class UCObservation {
             randomProjection = conf.randomProjection();
         }
 
-        public UCObservation build(BufferedImage image) throws Exception {
-            if(image == null) {
+        public UCObservation build(BufferedImage zoomOutImage, BufferedImage zoomInImage) throws Exception {
+            if(zoomOutImage == null || zoomInImage == null) {
                 throw new Exception("Image is null. Retry it.");
             }
-            Vision vision = new Vision(image);
-            Rectangle sling = vision.findSlingshotMBR();
+            Vision zoomOutVision = new Vision(zoomOutImage);
+            Rectangle sling = zoomOutVision.findSlingshotMBR();
             if(sling == null) {
                 throw new Exception("Cannot find sling. Maybe the game state is not equal to PLAYING.");
             }
             double pixelPerScale = sling.getHeight() + sling.getWidth();
 
-            List<ABObject> birds = vision.findBirdsMBR();
+            List<ABObject> birds = zoomOutVision.findBirdsMBR();
             if(birds == null || birds.size() == 0) {
-                throw new Exception("Cannot find any birds. Maybe the game state is not equal to PLAYING.");
+                Vision zoomInVision = new Vision(zoomInImage);
+                birds = zoomInVision.findBirdsMBR();
+                if(birds == null || birds.size() == 0) {
+                    throw new Exception("Cannot find any birds. Maybe the game state is not equal to PLAYING.");
+                }
             }
+            UCLog.i(String.format("Find %s birds.", birds.size()));
 
             List<ABObject> allObjects = new ArrayList<>();
-            allObjects.addAll(vision.findBlocksRealShape());
-            allObjects.addAll(vision.findHills());
-            allObjects.addAll(vision.findPigsRealShape());
+            allObjects.addAll(zoomOutVision.findBlocksRealShape());
+            allObjects.addAll(zoomOutVision.findHills());
+            allObjects.addAll(zoomOutVision.findPigsRealShape());
             if(allObjects.size() == 0) {
                 throw new Exception("Cannot find any objects (e.g., blocks, hills, pigs). Maybe the game state is not equal to PLAYING.");
             }
+            UCLog.i(String.format("Find %s objects.", allObjects.size()));
 
             UCObservation obs = new UCObservation();
             obs.observationMatrix = Nd4j.zeros(observationMatrixRows, observationMatrixColumns);
             obs.pixelPerScaleX = (double) observationImageWidth / pixelPerScale;
             obs.pixelPerScaleY = (double) observationImageHeight / pixelPerScale;
             obs.xOffset = observationImageXOffset;
-            obs.yOffset = vision.findGroundLevel();
-            obs.originalImage = image;
+            obs.yOffset = zoomOutVision.findGroundLevel();
+            obs.originalImage = zoomOutImage;
             obs.randomProjection = randomProjection;
 
             if(obs.yOffset() <= 0) {
