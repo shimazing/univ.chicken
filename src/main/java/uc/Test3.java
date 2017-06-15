@@ -2,9 +2,12 @@ package uc;
 
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.indexing.SpecifiedIndex;
 import uc.UCConfiguration;
+import uc.balltree.BallNode;
+import uc.balltree.BallTree;
 import uc.data.KNNLRUCache;
 import uc.data.QecTable;
 import uc.distance.EuclideanDistance;
@@ -21,34 +24,17 @@ import java.util.Random;
  */
 public class Test3 {
     public static void main(String[] args) throws Exception {
-/*
-        UCConfiguration conf = UCConfiguration.deserializeFromJson(new File("./autosave/conf.json"));
-        QecTable table = QecTable.deserialize(new File("./autosave/qec.json"), new File("./autosave/states.bin"), new File("./autosave/qvalues.bin"), new File("lruvalues.bin"), conf);
-        BufferedImage image = ImageIO.read(new File("./imgs/692_preprocess.png"));
-        INDArray array = Nd4j.create(84, 84);
-        for (int i = 0; i < array.rows(); i++) {
-            for (int j = 0; j < array.columns(); j++) {
-                int rgb = image.getRGB(j, i);
-                Color color = new Color(rgb);
-                array.put(j, i, (double) color.getBlue() / 255.0);
+        INDArray array = null;
+        for(int i = 0;i < 50; i++) {
+            if(array == null) {
+                array = Nd4j.zeros(2).addi(i);
+            } else {
+                array = Nd4j.vstack(array, Nd4j.zeros(2).addi(i));
             }
         }
 
-        INDArray state = Nd4j.toFlattened(array).mmul(conf.randomProjection());
+        BallTree tree = BallTree.buildTree(new HammingDistance(), array);
+        tree.nn(Nd4j.zeros(2).addi(5));
 
-*/
-
-        KNNLRUCache cache = new KNNLRUCache(100, 3, new HammingDistance(), 0);
-        INDArray state = Nd4j.randn(1, 64);
-
-        cache.add(state, 1);
-        for (int i = 0; i < 50; i++) {
-            cache.add(Nd4j.randn(1, 64), 1);
-        }
-
-
-
-        int i = cache.find(state);
-        System.out.println(i);
     }
 }

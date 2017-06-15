@@ -18,7 +18,6 @@ import java.util.TreeMap;
  */
 public class QecTable {
     private KNNLRUCache[] buffers;
-
     private QecTable() {
 
     }
@@ -31,7 +30,7 @@ public class QecTable {
         UCLog.i(String.format("QecTable initialization with %s actions.", conf.nActions()));
         buffers = new KNNLRUCache[conf.nActions()];
         for(int i = 0;i < conf.nActions();i++) {
-            buffers[i] = new KNNLRUCache(conf.maxStateCapacity(), conf.kNearestNeighbor(), conf.distantFunction(), conf.initialQValue());
+            buffers[i] = new KNNLRUCache(conf.maxStateCapacity(),conf.kNearestNeighbor(),  conf.stateDimension(), conf.initialQValue());
         }
     }
 
@@ -201,7 +200,7 @@ public class QecTable {
             double timer = meta.timer;
             int curCapacity = meta.curCapacity;
 
-            table.buffers[index] = new KNNLRUCache(conf.maxStateCapacity(), conf.kNearestNeighbor(), conf.distantFunction(), conf.initialQValue(),
+            table.buffers[index] = new KNNLRUCache(conf.maxStateCapacity(), conf.kNearestNeighbor(),  conf.stateDimension() , conf.initialQValue(),
                     subStates, subQValues, subLRUValues, timer, curCapacity);
         }
         return table;

@@ -11,8 +11,7 @@ import org.nd4j.linalg.indexing.NDArrayIndex;
 import uc.balltree.BallTree;
 import uc.distance.DistanceFunction;
 
-import javax.print.attribute.standard.MediaSize;
-import java.io.File;
+
 import java.util.List;
 
 /**
@@ -20,11 +19,10 @@ import java.util.List;
  */
 public class KNNLRUCache {
     private final int maxCapacity;
-    private DistanceFunction<Integer, Double> distFunc;
     private int k;
 
     private BallTree tree;
-
+    private int dimension;
     protected INDArray states;
     protected INDArray qValues;
     protected INDArray lruValues;
@@ -43,15 +41,15 @@ public class KNNLRUCache {
         return lruValues;
     }
 
-    public KNNLRUCache(int maxCapacity, int k, DistanceFunction<Integer, Double> distFunc, double initQValue) throws Exception {
-        this(maxCapacity, k, distFunc, initQValue, null, null, null, 0.0, 0);
+    public KNNLRUCache(int maxCapacity, int k, int dimension, double initQValue) throws Exception {
+        this(maxCapacity, k, dimension, initQValue, null, null, null, 0.0, 0);
     }
 
-    protected KNNLRUCache(int maxCapacity, int k, DistanceFunction<Integer, Double> distFunc, double initQValue,
+    protected KNNLRUCache(int maxCapacity, int k, int dimension, double initQValue,
                        INDArray states, INDArray qValues, INDArray lruValues, double timer, int curCapacity) throws Exception {
         this.maxCapacity = maxCapacity;
         this.k = k;
-        this.distFunc = distFunc;
+        this.dimension = dimension;
 
         if(states == null) {
             this.states = null;
@@ -73,30 +71,24 @@ public class KNNLRUCache {
         this.timer = timer;
         this.curCapacity = curCapacity;
 
-        if(this.curCapacity > 0) {
-            this.tree = BallTree.buildTree(distFunc, this.states);
-        }
+       // this.tree = new BallTree(this.dimension);
+
     }
 
     public int find(INDArray state) throws Exception {
-        if(curCapacity == 0) {
+        if(curCapacity == 0 || states == null) {
             return -1;
         }
 
-        int index = tree.nn(state);
-        if(states == null || index == -1) {
-            return -1;
+        Pair<Double, Integer> point = tree.nn(state);
+        if(point != null) {
+            INDArray stateStored = this.states.getRow(point.getSecond());
+            if(stateStored.equalsWithEps(state, Nd4j.EPS_THRESHOLD)) {
+                lruValues.putScalar(point.getSecond(), timer);
+                timer += 0.01;
+                return point.getSecond();
+            }
         }
-
-
-        INDArray stateStored = states.getRow(index);
-
-        if(state.equalsWithEps(stateStored, Nd4j.EPS_THRESHOLD)) {
-            lruValues.putScalar(index, timer);
-            timer += 0.01;
-            return index;
-        }
-
         return -1;
     }
 
@@ -160,7 +152,7 @@ public class KNNLRUCache {
             qValues.putScalar(index, reward);
             lruValues.putScalar(index, timer);
             timer += 0.01;
-            tree = BallTree.buildTree(distFunc, states);
+            //tree.insert(state, index);
         }
     }
 }
