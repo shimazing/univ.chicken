@@ -1,29 +1,18 @@
 package uc;
 
-        import org.nd4j.linalg.api.ndarray.INDArray;
-        import org.nd4j.linalg.factory.Nd4j;
-        import org.nd4j.linalg.indexing.INDArrayIndex;
-        import org.nd4j.linalg.indexing.NDArrayIndex;
-        import uc.data.QecTable;
 
-        import javax.imageio.ImageIO;
-
-        import java.awt.*;
-        import java.awt.image.BufferedImage;
-        import java.io.*;
+import java.io.File;
 
 /**
  * Created by keltp on 2017-06-07.
  */
 public class Test2 {
     public static void main(String args[]) throws Exception {
-        /*UCConfiguration conf = new UCConfiguration.Builder().nStepsForEpsilonDecay(1500).build();
+        /*UCConfiguration conf = new UCConfiguration.Builder().nStepsForEpsilonDecay(1500).kNearestNeighbor(7).build();
         UCAgent agent = new UCAgent(conf);
         agent.run();*/
 
-        UCAgent agent = UCAgent.deserialize(new File("./autosave"), "conf.json",
-                "qec.json", "states.bin",
-                "qvalues.bin", "lruvalues.bin", "stats.json");
-        agent.run(19);
+        UCAgent agent = UCAgent.deserialize(new File("./autosave"), "conf.json", "qec.json", "states.bin", "qvalues.bin", "lruvalues.bin", "stats.json");
+        agent.run();
     }
 }

@@ -130,13 +130,14 @@ public class BallTree {
     }
 
 
-    public Pair<Double, Integer> nn(INDArray target) throws Exception {
-        List<Pair<Double, Integer>> nn = knn(target, 1);
-        System.out.println(nn.size());
-        if(nn != null && nn.size() > 0) {
-            return nn.get(0);
+    public int nn(INDArray target) throws Exception {
+        for(int i = 0;i < indices.length();i++) {
+            int index = indices.getInt(i);
+            if(target.equalsWithEps(data.getRow(index),0.000000001)) {
+                return index;
+            }
         }
-        return null;
+        return -1;
     }
 
     public List<Pair<Double, Integer>> knn(INDArray target, int k) throws Exception {
@@ -204,9 +205,7 @@ public class BallTree {
         } else {
             for(int i = node.start; i <= node.end; i++) {
                 int index = indices.getInt(i);
-                System.out.println(index);
                 if(target.equalsWithEps(data.getRow(index), Nd4j.EPS_THRESHOLD)) {
-                    heap.put(index, 0);
                     continue;
                 }
                 if(heap.totalSize() < k) {

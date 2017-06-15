@@ -80,33 +80,23 @@ public class KNNLRUCache {
 
     public int find(INDArray state) throws Exception {
         if(curCapacity == 0) {
-            System.out.println("capacity");
             return -1;
         }
 
-        Pair<Double, Integer> nn = tree.nn(state);
-        if(nn == null) {
-            System.out.println("no nn");
+        int index = tree.nn(state);
+        if(states == null || index == -1) {
             return -1;
         }
-        int index = nn.getSecond();
 
-        if(states == null) {
-            System.out.println("no states");
-            return -1;
-        }
 
         INDArray stateStored = states.getRow(index);
 
         if(state.equalsWithEps(stateStored, Nd4j.EPS_THRESHOLD)) {
-
             lruValues.putScalar(index, timer);
             timer += 0.01;
             return index;
         }
-        System.out.println("not same");
-        System.out.println(state);
-        System.out.println(stateStored);
+
         return -1;
     }
 
